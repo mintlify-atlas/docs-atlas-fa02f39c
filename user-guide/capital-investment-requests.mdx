@@ -1,0 +1,190 @@
+---
+title: "Submit a capital investment request (SIC)"
+description: "Create and submit a capital investment request (SIC) in SIC-HVD: fill in justification, cost breakdown, budget options, and route it for approval."
+---
+
+A capital investment request (SIC, from *Solicitud de Inversión de Capital*) is the primary mechanism for requesting budget authorization for new or replacement capital assets. Originators — the users who initiate requests on behalf of their department — fill out a structured form covering the investment justification, cost breakdown, and budget source, then route the request through a multi-step approval workflow.
+
+<Note>
+  Only users with the **originator** role can create capital investment requests. If you do not see the **Solicitudes de Inversión de Capital** menu item, contact your administrator to verify your role. See [Roles and permissions](/user-guide/roles-and-permissions) for details.
+</Note>
+
+## Creating a new request
+
+<Steps>
+  <Step title="Open the request list">
+    In the left navigation sidebar, click **Solicitudes de Inversión de Capital**. The table lists all requests you have access to.
+  </Step>
+
+  <Step title="Start a new request">
+    Click **New** (or **Nuevo**) in the top-right corner of the table. The form opens with status set to **Borrador** (Draft) automatically.
+  </Step>
+
+  <Step title="Fill in the basic information">
+    Complete the fields in the **Formulario** section:
+
+    | Field | Description |
+    |---|---|
+    | **Compañia** | Select the company this investment belongs to. |
+    | **Tipo de proyecto** | Select the project type. Only types configured for SIC requests appear in this list. |
+    | **Nombre del proyecto** | Enter a descriptive project name (maximum 80 characters). |
+    | **Monto** | Enter the requested amount in Honduran lempiras (L.). |
+    | **Tasa de cambio** | Enter the current exchange rate. The system calculates and displays the equivalent USD amount automatically. |
+    | **Tipo de capital** | Select **Nuevo** if this is a new asset, or **Reemplazo** if it replaces an existing asset. |
+    | **Departamento** | Select the department making the request. |
+    | **Centro de costo** | Select the cost center that will bear the expense. |
+    | **Presupuestado** | Select **Sí** or **No** to indicate whether this investment was included in the annual budget. |
+  </Step>
+
+  <Step title="Write the investment justification">
+    In the **Información general** section, complete all justification fields using the rich-text editor. Use bullet lists, bold, and other formatting to make your case clearly.
+
+    | Field | Description |
+    |---|---|
+    | **Descripción de inversión** | Describe the asset in detail: brand, model, capacity, type of structure to be built, etc. |
+    | **Activo que reemplaza** | Identify the asset being replaced and its acquisition date. Required when **Tipo de capital** is **Reemplazo**. |
+    | **Razón de reemplazo** | Explain why replacement is necessary (obsolescence, physical damage, etc.). |
+    | **Uso del equipo** | Describe how the asset will be used once acquired. |
+    | **Alternativas consideradas** | Document alternatives that were evaluated, such as leasing or repairing existing equipment. |
+    | **Posibles ahorros y/o costos** | Quantify expected savings or additional costs resulting from the investment. |
+    | **Riesgo de no hacer la inversión** | Describe the operational risk if the investment is not approved. |
+    | **Otras justificaciones** | Include any additional supporting information. Use an extra sheet if necessary. |
+  </Step>
+
+  <Step title="Select a budget option">
+    Below the investment description, select exactly one of the four budget options (A, B, C, or D). Only one option can be active per request.
+
+    - **Option A** — The investment was budgeted. Enter the budgeted amount.
+    - **Option B** — The investment exceeds the budgeted amount. Enter the excess amount.
+    - **Option C** — The investment was not budgeted; enter the budget line it will substitute.
+    - **Option D** — The investment was not budgeted and no departmental funds are available. No additional input is required.
+
+    See [Attachments and budget options](/user-guide/attachments-and-options) for a full description of each option.
+  </Step>
+
+  <Step title="Complete the investment breakdown">
+    Select **Tipo de inversión**: **Compra** (purchase) or **Construcción** (construction). The form shows the relevant breakdown fields.
+
+    **For purchases**, enter amounts for each cost category:
+
+    | Field | Description |
+    |---|---|
+    | **Local** | Cost of locally sourced items (`local_purchase_category`). |
+    | **Importado** | Cost of imported items (`imported_purchase_category`). |
+    | **Flete** | Freight charges (`purchase_freight_category`). |
+    | **Impuestos** | Applicable taxes (`purchase_taxes`). |
+    | **Otros** | Any other purchase costs (`other_purchase_category`). |
+
+    **For construction projects**, enter amounts for:
+
+    | Field | Description |
+    |---|---|
+    | **Contrato** | Contract value (`construction_contract`). |
+    | **Compañia** | Name of the contracting company (`construction_company`). |
+    | **Labor** | Labor costs (`construction_labor`). |
+    | **Material** | Material costs (`construction_material`). |
+    | **Serv. Equip** | Equipment service costs (`construction_equipment_service`). |
+    | **Otros** | Other construction costs (`construction_other`). |
+
+    The **Total** field is calculated automatically and read-only. The total must equal the **Monto** entered in the basic information section before the form can be submitted.
+
+    <Warning>
+      If the **Total de inversión** does not match the **Monto**, the form will not save. Adjust the breakdown line items or the **Monto** field until both values match.
+    </Warning>
+  </Step>
+
+  <Step title="Fill in the estimation source">
+    The **Fuente de Estimación** panel appears alongside the investment breakdown for both purchase and construction types.
+
+    | Field | Description |
+    |---|---|
+    | **Nombre** | Name of the person or contact who provided the estimate (`source_name`). |
+    | **Empresa** | Company or supplier that provided the estimate (`source_enterprise`). |
+    | **Fecha** | Date of the estimate (`source_date`). |
+
+    <Tip>
+      Attach a copy of the supplier quotation and the production-tax calculation as file attachments. See [Attachments and budget options](/user-guide/attachments-and-options).
+    </Tip>
+  </Step>
+
+  <Step title="Upload supporting files">
+    At the bottom of the **Información general** section, use the **Suba las evidencias necesarias** file uploader to attach supporting documents. Multiple files can be uploaded in a single request. Accepted formats: PDF, Excel (.xls / .xlsx), Word (.doc / .docx), PowerPoint (.ppt / .pptx), and images (JPEG, PNG, JPG).
+  </Step>
+
+  <Step title="Save or send for approval">
+    - Click **Save** to store the request as a draft. You can return to edit it later.
+    - Click **Send for approval** (**Enviar a aprobación**) to start the approval workflow. You will be prompted to select the first approver (Director Ejecutivo). The request status changes to **Pendiente de aprobar**.
+  </Step>
+</Steps>
+
+## Saving as draft vs. sending for approval
+
+When you click **Save**, the request is stored with status **Borrador** (Draft). Draft requests are only visible to you and administrators. No approvers are notified.
+
+When you click **Send for approval**, the system:
+
+1. Assigns a sequential application number (see [Application number format](#application-number-format)).
+2. Records a `submitted` entry in the review history.
+3. Creates a pending assignment for the selected approver.
+4. Sends an email notification to the chosen approver.
+
+You can send a draft for approval at any time from the request list by opening the record and clicking **Send for approval**, as long as the request is still in **Borrador** status and you are the originator.
+
+## Editing a returned request
+
+When an approver returns a request, its status changes to **Devuelta** (Returned) and you receive an email notification with the reviewer's comment.
+
+To revise and resubmit:
+
+<Steps>
+  <Step title="Open the returned request">
+    From the **Solicitudes de Inversión de Capital** list, find the request with status **Devuelta** and click its row or the edit action.
+  </Step>
+
+  <Step title="Review the comment">
+    Scroll to the **Histórico de revisión** section at the bottom of the form to read the reviewer's comment explaining why the request was returned.
+  </Step>
+
+  <Step title="Make corrections">
+    Update any fields as needed. The entire form is editable while the request is in **Devuelta** status.
+  </Step>
+
+  <Step title="Resubmit">
+    Click **Send for approval** again. The history records a `resubmitted` entry showing your name as the correcting user. The original originator of the request is preserved and does not change.
+  </Step>
+</Steps>
+
+## Viewing a finalized request
+
+Requests in **Aprobada** (Approved) or **Rechazada** (Rejected) status are read-only. All form fields are disabled and no save or approval actions are available.
+
+To open a finalized request, click the **View** (Ver) action on the request list. The form loads in view mode, displaying the full review history at the bottom.
+
+## Application number format
+
+An application number is assigned the first time a request is sent for approval. It is not assigned to drafts.
+
+The format is:
+
+```
+PREFIX-YEAR-XXXX
+```
+
+Where:
+- `PREFIX` — the uppercase prefix configured for the company (e.g., `HVD`).
+- `YEAR` — the four-digit calendar year the request was first submitted.
+- `XXXX` — a zero-padded sequential counter that resets each year (e.g., `0001`, `0042`).
+
+**Example:** `HVD-2025-0003`
+
+If the company has no prefix configured, the number omits the prefix: `2025-0003`.
+
+<Note>
+  The application number cannot be edited. It is generated automatically and guaranteed to be unique per year.
+</Note>
+
+## Printing the PDF
+
+A **Print request** (**Imprimir solicitud**) button appears in the view header only when the request status is **Aprobada** or **Rechazada**. The button is not available for drafts, pending, or returned requests.
+
+Click **Imprimir solicitud** to confirm, then the PDF opens in a new browser tab. The download link is signed and expires, so use it promptly. See [PDF export](/reference/pdf-export) for technical details about the export format.

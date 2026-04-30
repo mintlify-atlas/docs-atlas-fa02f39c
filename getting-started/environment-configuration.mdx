@@ -1,0 +1,176 @@
+---
+title: "Configure SIC-HVD environment variables"
+description: "Reference for every variable in .env.example — application settings, database, mail, queue, cache, and Redis — with guidance for local and production use."
+---
+
+SIC-HVD is configured entirely through environment variables loaded from a `.env` file at the project root. Copy `.env.example` to `.env` before running the application for the first time. The sections below document every variable, grouped by concern.
+
+<Note>
+  Mail variables (`MAIL_*`) are especially important. The approval workflow sends email notifications at each stage of a capital investment or memo request. If mail is misconfigured, approvers will not be notified and workflows will stall silently.
+</Note>
+
+---
+
+## Application settings
+
+These variables control the fundamental runtime behaviour of the Laravel application.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_NAME` | `Laravel` | The display name of the application. Appears in email footers and the browser title. Set to `SIC-HVD` or your organisation's name. |
+| `APP_ENV` | `local` | Runtime environment. Use `local` for development and `production` for live deployments. Affects caching, error display, and service-provider behaviour. |
+| `APP_KEY` | _(empty)_ | 32-character base64 encryption key. **Required.** Generate with `php artisan key:generate`. Never share or rotate without re-encrypting stored data. |
+| `APP_DEBUG` | `true` | When `true`, full stack traces are shown in error pages. Set to `false` in production. |
+| `APP_URL` | `http://localhost` | The canonical URL of your application, including scheme. Used in generated links in emails and PDF exports. |
+| `APP_LOCALE` | `en` | Default locale for translations. |
+| `APP_FALLBACK_LOCALE` | `en` | Locale used when a translation key is missing in `APP_LOCALE`. |
+| `BCRYPT_ROUNDS` | `12` | Work factor for password hashing. Higher values are more secure but slower. Do not lower below `12` in production. |
+| `LOG_CHANNEL` | `stack` | Laravel logging channel. `stack` writes to the channels listed in `LOG_STACK`. |
+| `LOG_LEVEL` | `debug` | Minimum log severity. Use `error` or `warning` in production to reduce log volume. |
+
+---
+
+## Database
+
+SIC-HVD supports SQLite for local development and MySQL for production.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_CONNECTION` | `sqlite` | Database driver. Use `sqlite` locally or `mysql` for production. |
+| `DB_HOST` | _(commented out)_ | Database host. Required when `DB_CONNECTION=mysql`. Set to `db` when using Docker Compose. |
+| `DB_PORT` | _(commented out)_ | Database port. Defaults to `3306` for MySQL when not set. |
+| `DB_DATABASE` | _(commented out)_ | Database name. For SQLite, this is the path to the `.sqlite` file; Laravel defaults to `database/database.sqlite`. |
+| `DB_USERNAME` | _(commented out)_ | Database username. Required for MySQL. |
+| `DB_PASSWORD` | _(commented out)_ | Database password. Required for MySQL. |
+
+<Tip>
+  For local development, leave `DB_CONNECTION=sqlite` and omit the other `DB_*` variables. Laravel creates `database/database.sqlite` automatically when you run `php artisan migrate`.
+</Tip>
+
+**Docker Compose MySQL example:**
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=app
+DB_USERNAME=app
+DB_PASSWORD=secret
+```
+
+---
+
+## Mail
+
+<Warning>
+  Mail configuration is critical for the SIC-HVD approval notification system. Every transition in a capital investment or memo request approval workflow dispatches an email to the relevant approver or requester. If these variables are wrong or missing, notifications will fail silently.
+</Warning>
+
+SIC-HVD includes the `resend/resend-laravel` package alongside the standard Laravel mailers. You can use Resend, SMTP, Mailgun, or any other Laravel-compatible mail driver.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAIL_MAILER` | `log` | Mail driver. `log` writes emails to the log file instead of sending (useful for local development). For production, use `resend`, `smtp`, `mailgun`, or another supported driver. |
+| `MAIL_SCHEME` | `null` | Transport scheme for SMTP. Set to `tls` when using port 465 with SSL. |
+| `MAIL_HOST` | `127.0.0.1` | SMTP server hostname. Not used when `MAIL_MAILER=resend`. |
+| `MAIL_PORT` | `2525` | SMTP server port. Common values: `587` (STARTTLS), `465` (SSL), `25` (unauthenticated). |
+| `MAIL_USERNAME` | `null` | SMTP authentication username. |
+| `MAIL_PASSWORD` | `null` | SMTP authentication password or API key (depending on driver). |
+| `MAIL_FROM_ADDRESS` | `hello@example.com` | The sender address that appears on all outgoing notifications. Set this to a verified address for your domain. |
+| `MAIL_FROM_NAME` | `${APP_NAME}` | The sender name displayed in email clients. Defaults to the value of `APP_NAME`. |
+
+**Example: Resend**
+
+```env
+MAIL_MAILER=resend
+MAIL_FROM_ADDRESS=notifications@your-domain.com
+MAIL_FROM_NAME="SIC-HVD"
+RESEND_API_KEY=re_xxxxxxxxxxxx
+```
+
+**Example: SMTP**
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.your-provider.com
+MAIL_PORT=587
+MAIL_USERNAME=your-smtp-user
+MAIL_PASSWORD=your-smtp-password
+MAIL_FROM_ADDRESS=notifications@your-domain.com
+MAIL_FROM_NAME="SIC-HVD"
+```
+
+**Local development (no emails sent):**
+
+```env
+MAIL_MAILER=log
+```
+
+See [Mail and notifications](/reference/mail-and-notifications) for details on which workflow events trigger emails.
+
+---
+
+## Queue
+
+The approval workflow dispatches notification jobs asynchronously. The queue worker must be running for emails to be delivered.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `QUEUE_CONNECTION` | `database` | Queue driver. `database` stores jobs in the `jobs` table and works without additional infrastructure. Use `redis` in production for better performance and reliability. |
+
+<Warning>
+  If `QUEUE_CONNECTION=database`, run `php artisan queue:work` (or `composer run dev` locally) to process jobs. In Docker Compose, the `queue` service handles this automatically. Without a running queue worker, approval emails will never be sent even if mail is correctly configured.
+</Warning>
+
+**Production recommendation:**
+
+```env
+QUEUE_CONNECTION=redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+```
+
+---
+
+## Session and cache
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SESSION_DRIVER` | `database` | Where sessions are stored. `database` is the default; `redis` is recommended in production for performance. |
+| `SESSION_LIFETIME` | `120` | Session duration in minutes before the user is automatically logged out. |
+| `SESSION_ENCRYPT` | `false` | When `true`, session data is encrypted using `APP_KEY`. |
+| `SESSION_PATH` | `/` | Cookie path. Leave as `/` unless you are hosting the application under a sub-path. |
+| `SESSION_DOMAIN` | `null` | Cookie domain. Set to your domain (e.g., `.your-domain.com`) to share sessions across subdomains. |
+| `CACHE_STORE` | `database` | Cache driver. Use `redis` in production. |
+
+---
+
+## Redis
+
+Redis is used as the cache store, queue backend, and session store in production. The Docker Compose file includes a Redis 7 service.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REDIS_CLIENT` | `phpredis` | PHP Redis client library. `phpredis` (C extension) is installed in the Docker image. Use `predis` if the extension is unavailable. |
+| `REDIS_HOST` | `127.0.0.1` | Redis server hostname. Set to `redis` when using Docker Compose. |
+| `REDIS_PASSWORD` | `null` | Redis password. Set if your Redis instance requires authentication. |
+| `REDIS_PORT` | `6379` | Redis server port. |
+
+---
+
+## Other variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BROADCAST_CONNECTION` | `log` | Broadcast driver. `log` disables real-time broadcasting. Not required unless you add WebSocket features. |
+| `FILESYSTEM_DISK` | `local` | Default storage disk for file uploads. `local` stores files under `storage/app`. |
+| `VITE_APP_NAME` | `${APP_NAME}` | Exposes `APP_NAME` to the Vite frontend build. |
+
+---
+
+## Next steps
+
+- [Install SIC-HVD for local development](/getting-started/installation) — get the application running on your machine
+- [Deploy SIC-HVD with Docker](/getting-started/docker-deployment) — production deployment guide
+- [Mail and notifications](/reference/mail-and-notifications) — how approval emails are structured and triggered
+- [Approval workflow](/user-guide/approval-workflow) — understand when notifications are dispatched

@@ -1,0 +1,123 @@
+---
+title: 'Notifications and email alerts in SIC-HVD'
+description: 'See when SIC-HVD sends notifications, what each message contains, and how email delivery is configured via the mail driver and Resend.'
+---
+
+SIC-HVD sends notifications through two channels simultaneously: **email** (via the Laravel mail driver) and **in-app database notifications** displayed in the Filament bell icon. Every notification event triggers both channels so that recipients receive the message whether or not they are currently logged in.
+
+## When notifications are sent
+
+| Event | Who is notified | Channel |
+|---|---|---|
+| Originator submits a request | Selected approver(s) | Email + in-app |
+| Approver approves and forwards | Next approver in the chain | Email + in-app |
+| Approver returns a request | Previous holder in the chain | Email + in-app |
+| Approver rejects a request | Originator | Email + in-app |
+| Originator resubmits a returned request | Next approver | Email + in-app |
+
+<Note>
+  The originator is always notified when any approver acts on their request (approve, return, or reject). The notification includes who acted and what decision they made.
+</Note>
+
+## Email notifications
+
+Emails are sent using the `ApprovalWorkflowNotification` class, which implements Laravel's `Notification` interface with the `mail` and `database` channels.
+
+**Subject line format:**
+
+```text
+Solicitud - {request_type} - {request_number}
+```
+
+For example: `Solicitud - Inversión de Capital - HVD-2026-0001`
+
+**Email body variables:**
+
+| Variable | Description |
+|---|---|
+| `name_recipient` | First name of the person receiving the email |
+| `text_body` | Context message: "Se le asignó una solicitud…" or "Su solicitud ha sido respondida:" |
+| `request_type` | `Inversión de Capital` or `Memo` |
+| `project_type` | The request type option selected on the form |
+| `project_name` | Name of the project from the request form |
+| `user_name` | Full name and function of the sender, formatted as `"Función - Nombre Apellido"` |
+| `action_label` | `"Revisar solicitud"` (for approvers) or `"Ver solicitud"` (for originators) |
+| `action_url` | Direct link to the request detail page |
+| `status` | Present only in originator notifications: the decision label (e.g., `"Aprobada"`) |
+| `pending_approval_by` | Optional: shows who else is still pending, if determinable |
+
+### Mail driver configuration
+
+Email delivery is controlled by the `MAIL_*` environment variables in `.env`:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=your@email.com
+MAIL_PASSWORD=your-password
+MAIL_SCHEME=tls
+MAIL_FROM_ADDRESS=no-reply@example.com
+MAIL_FROM_NAME="SIC-HVD"
+```
+
+### Resend integration
+
+The application includes the `resend/resend-laravel` package. To use Resend as the mail driver, set:
+
+```dotenv
+MAIL_MAILER=resend
+RESEND_API_KEY=re_your_api_key
+```
+
+See [Mail and notifications reference](/reference/mail-and-notifications) for full configuration details.
+
+## In-app notifications
+
+In-app notifications appear in the **bell icon** in the Filament top navigation bar. They are stored in the `notifications` database table and persist until the user dismisses them.
+
+Each in-app notification includes:
+
+- **Title**: the same subject-line format as the email (`Solicitud - {type} - {number}`)
+- **Body**: a short summary with the project name and the name of the person who sent it
+- **Action button**: a **Revisar solicitud** or **Ver solicitud** button that links directly to the request
+
+The bell icon counter updates in real time when a new notification arrives, because the system dispatches a broadcast event after writing to the database (`isEventDispatched: true`).
+
+<Tip>
+  Clicking the action button in the notification marks it as read automatically.
+</Tip>
+
+## Notification content by recipient
+
+<Tabs>
+  <Tab title="Approver notifications">
+    When a request is assigned to you for review, your notification contains:
+
+    - A message: *"Tiene una solicitud pendiente de revisar"*
+    - Project name
+    - Sender: the person who forwarded the request to you (shown as `"Función - Nombre"`)
+    - An optional *"Pendiente de aprobación por:"* line — only shown when there is exactly one other pending approver, to avoid confusion when multiple routes are possible
+
+    The in-app bell notification uses an inbox icon (`heroicon-o-inbox`).
+  </Tab>
+  <Tab title="Originator notifications">
+    When an approver acts on your request, your notification contains:
+
+    - A message: *"Su solicitud fue [status]"* — where the status label is color-coded:
+      - **Green** for `Aprobada`
+      - **Red** for `Rechazada`
+      - Neutral for `Devuelta`
+    - Project type and project name
+    - The name and function of the approver who acted
+    - An optional *"Pendiente de aprobación por:"* line showing who holds the request next
+
+    The in-app notification uses a check-circle icon for approvals and an x-circle icon for rejections.
+  </Tab>
+</Tabs>
+
+## Related pages
+
+- [How the approval workflow works](/user-guide/approval-workflow)
+- [Mail and notifications reference](/reference/mail-and-notifications)
+- [Environment configuration](/getting-started/environment-configuration)

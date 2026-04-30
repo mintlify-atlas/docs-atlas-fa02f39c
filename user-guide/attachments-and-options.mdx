@@ -1,0 +1,151 @@
+---
+title: "Attachments and budget options for SIC requests"
+description: "How to upload supporting files and choose the correct A/B/C/D budget option when submitting a capital investment request in SIC-HVD."
+---
+
+Capital investment requests (SIC) support two supplementary mechanisms that give approvers the full context they need to make a decision: file attachments for supporting documents, and budget options that state the relationship between the requested amount and the department's approved budget. Both features are available only on SIC requests — memo requests use a simpler file upload without the budget option system.
+
+## File attachments
+
+Each SIC request can carry one or more attached files as supporting evidence. Attachments are managed inside the **Información general** section of the request form, using the **Suba las evidencias necesarias** file uploader.
+
+### Uploading files
+
+<Steps>
+  <Step title="Open or create a request">
+    Navigate to **Solicitudes de Inversión de Capital** and open an existing draft or create a new request. Attachments can be added or changed any time the request is in **Borrador** (Draft) or **Devuelta** (Returned) status.
+  </Step>
+
+  <Step title="Select files to upload">
+    Scroll to the **Suba las evidencias necesarias** uploader at the bottom of the **Información general** section. Click the upload area or drag and drop files onto it. You can select multiple files in a single operation.
+  </Step>
+
+  <Step title="Verify the uploads">
+    Each uploaded file appears in the uploader with its filename. You can click the file name to open or preview it, and click the download icon to save a local copy.
+  </Step>
+
+  <Step title="Save the request">
+    Click **Save** (or send for approval). The system stores each file on the server under `local_currency_attachments/` and creates a record in the `local_currency_attachment` table that links the file to the request and to your user account.
+  </Step>
+</Steps>
+
+### Supported file types
+
+The uploader accepts the following formats:
+
+| Category | Extensions |
+|---|---|
+| Documents | PDF, Word (.doc, .docx) |
+| Spreadsheets | Excel (.xls, .xlsx) |
+| Presentations | PowerPoint (.ppt, .pptx) |
+| Images | JPEG, JPG, PNG |
+
+Files in any other format are rejected by the uploader.
+
+<Tip>
+  For purchase-type investments, include a copy of the supplier quotation and the production-tax calculation. The **Fuente de Estimación** section of the form reminds you of this requirement.
+</Tip>
+
+### How files are stored
+
+Files are saved to the server's local disk storage under the `local_currency_attachments/` directory. Original filenames are preserved. The database record stores the `file_path`, `file_name`, and `file_type` (extension) for each attachment, along with the ID of the user who uploaded it.
+
+### Removing files
+
+To remove an attachment, click the **×** (remove) button next to the file in the uploader. The file is marked for deletion. When you next click **Save**, the system deletes the file from disk and removes its database record. Removed files cannot be recovered.
+
+<Warning>
+  Removing an attachment and saving is permanent. If you need to keep a file, download it before removing it from the uploader.
+</Warning>
+
+---
+
+## Budget options (A, B, C, D)
+
+Every SIC request requires exactly one budget option to be selected. The option documents the relationship between the investment amount and the department's annual budget, which is essential information for the approver at the final review step.
+
+The four options are displayed in the **Información general** section, below the investment description and above the investment type selector. Only one option can be active at a time — selecting a new option automatically deselects the previous one and clears any text entered for it.
+
+### Option A — Budgeted, within amount
+
+> **A.** Presupuestado por L. **[amount]**, la solicitud no excede el monto.
+
+Select option A when the investment was included in the department's annual budget **and** the requested amount does not exceed the budgeted figure.
+
+**Required input:** Enter the budgeted amount (monetary value, in lempiras).
+
+**Example:** The budget approved L. 150,000 for server upgrades. The request is for L. 120,000. Select option A and enter `150,000.00`.
+
+---
+
+### Option B — Budgeted, exceeds amount
+
+> **B.** La solicitud actual excede el monto presupuestado en **[amount]** L.
+
+Select option B when the investment was budgeted but the requested amount is **greater** than what was approved in the budget. Enter the amount by which the request exceeds the budget.
+
+**Required input:** Enter the excess amount (monetary value, in lempiras).
+
+**Example:** The budget allocated L. 100,000 but the request is for L. 130,000. Select option B and enter `30,000.00`.
+
+---
+
+### Option C — Not budgeted, substituting from existing line
+
+> **C.** Esta SIC no fue presupuestada, sustituir de **[budget line or description]**
+
+Select option C when the investment was **not** included in the annual budget, but funds can be redirected from another budget line or approved project.
+
+**Required input:** Enter a text description of the budget line or project being substituted (free text).
+
+**Example:** "Sustitución del presupuesto de mantenimiento preventivo Q3 2025".
+
+---
+
+### Option D — Not budgeted, no available funds
+
+> **D.** Esta SIC no fue presupuestada, y no existe fondo en el departamento
+
+Select option D when the investment was **not** budgeted and no existing departmental funds can cover it. This option requires no additional input.
+
+**No input required.** Select option D and the statement is included in the request as-is.
+
+---
+
+### Comparison of budget options
+
+| Option | Budgeted? | Funds available? | Input type |
+|---|---|---|---|
+| A | Yes | Yes, within amount | Monetary amount (L.) |
+| B | Yes | Exceeds budget | Monetary excess amount (L.) |
+| C | No | Redirect from existing line | Free text (line or project name) |
+| D | No | None | None |
+
+<Note>
+  Options A and B accept a monetary amount. Option C accepts a text description. Option D requires no input. Selecting A, B, or C without filling in the required field will produce a validation error when you try to save or send the request.
+</Note>
+
+---
+
+## Memo requests
+
+Memo requests have a file uploader (**Subir la evidencia correspondiente**) that works the same way as the SIC uploader — same supported file types, same storage behavior, same remove-and-save deletion process. However, memo requests do **not** have budget options. The A/B/C/D selection is only present on capital investment (SIC) requests.
+
+---
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Capital investment requests" icon="banknotes" href="/user-guide/capital-investment-requests">
+    Full guide to creating and submitting SIC requests, including the investment breakdown and estimation source fields.
+  </Card>
+  <Card title="Memo requests" icon="document-text" href="/user-guide/memo-requests">
+    Create and manage memo requests for operational expenditures.
+  </Card>
+  <Card title="Request statuses" icon="arrow-path" href="/reference/request-statuses">
+    Reference for all request statuses (Draft, Pending, Approved, Returned, Rejected, Resubmitted).
+  </Card>
+  <Card title="Approval workflow" icon="arrow-right-circle" href="/user-guide/approval-workflow">
+    Understand how approvers review, return, and approve requests at each step.
+  </Card>
+</CardGroup>

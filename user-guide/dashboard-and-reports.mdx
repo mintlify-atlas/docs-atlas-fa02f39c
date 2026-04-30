@@ -1,0 +1,104 @@
+---
+title: "Monitor requests with the SIC-HVD dashboard"
+description: "Understand the four dashboard widgets in SIC-HVD and how each one reflects request volume, approval outcomes, and current status counts for your role."
+---
+
+The SIC-HVD dashboard is the first screen you see after logging in. It displays four widgets that give you a real-time snapshot of request activity — how many requests were submitted this month, how many were approved or rejected, and how many are currently pending, approved, or rejected across both capital investment and memo request types. All authenticated users see the dashboard, but each widget filters its data based on your role: `super_admin` users see system-wide totals, `approver` users see only requests assigned to them, and `originator` users see only requests they created.
+
+## Dashboard widgets
+
+### Capital investment request status overview
+
+This widget (`LocalCurrencyRequestStatusOverview`) displays three stat cards showing the current number of capital investment requests in each of three states:
+
+| Card | Status value | What it counts |
+|---|---|---|
+| Solicitudes Pendientes | `pending` | Requests waiting for an approver action. Shown in amber. |
+| Solicitudes Aprobadas | `approved` | Requests that have completed the full approval chain. Shown in green. |
+| Solicitudes Rechazadas | `rejected` | Requests that were definitively rejected. Shown in red. |
+
+The counts reflect only the requests visible to you based on your role. Draft requests are excluded from all three cards.
+
+### Memo request status overview
+
+This widget (`MemoRequestStatusOverview`) mirrors the capital investment status overview but for memo requests. It shows the same three stat cards — pending, approved, and rejected — filtered to the memo requests visible to you.
+
+Together, these two overview widgets give you an at-a-glance count of active work across both request types without needing to open individual list pages.
+
+### Monthly requests chart
+
+This widget (`MonthlyRequestsChart`) renders a **bar chart** showing the total number of requests submitted per month over the **last three months** (the current month plus the two months before it). Two data series are plotted side by side:
+
+| Series | Color | What it shows |
+|---|---|---|
+| Memo | Amber (`#f59e0b`) | Count of memo requests created in that month. |
+| Inversión de Capital | Blue (`#4286ec`) | Count of capital investment requests created in that month. |
+
+Use this chart to spot trends in submission volume — for example, whether requests spike at the start of a budget cycle or drop off at month end.
+
+### Monthly approvals chart
+
+This widget (`MonthlyApprovalsRequestChart`) also renders a **bar chart** over the last three months, but breaks down requests by their outcome rather than just their count. Four data series are shown:
+
+| Series | Color | What it shows |
+|---|---|---|
+| Aprobadas - Memo | Light green (`#4ade80`) | Memo requests that reached `approved` status in that month. |
+| Aprobadas - Inversión de Capital | Dark green (`#16a34a`) | Capital investment requests that reached `approved` status in that month. |
+| Rechazadas - Memo | Light red (`#f87171`) | Memo requests that reached `rejected` status in that month. |
+| Rechazadas - Inversión de Capital | Dark red (`#dc2626`) | Capital investment requests that reached `rejected` status in that month. |
+
+<Note>
+  Both charts use the `created_at` timestamp to bucket requests into months, not the date the request changed status. A request created in March that was approved in April will appear in the March bar.
+</Note>
+
+## Role-based visibility
+
+Widget data is scoped automatically based on your role. You do not need to configure any filters — the system applies them for you.
+
+| Role | What the widgets show |
+|---|---|
+| `super_admin` | All requests in the system, regardless of who created them or who is assigned to review them. |
+| `approver` | Only requests that appear in your review history — i.e., requests that have been assigned to you at some point in the approval chain. Draft requests are excluded. |
+| `originator` | Only requests you created yourself. |
+
+## Filtering requests in list tables
+
+The dashboard widgets give you counts and trends, but to take action on individual requests you use the list pages (**Solicitudes de Inversión de Capital** and **Solicitudes Memo** in the sidebar). Each list page includes a status filter that lets you narrow the table to a specific status value.
+
+The full set of statuses you can filter by:
+
+| Status value | Label shown in UI |
+|---|---|
+| `draft` | Borrador |
+| `pending` | Pendiente de aprobar |
+| `approved` | Aprobada |
+| `returned` | Devuelta |
+| `rejected` | Rechazada |
+| `resubmitted` | Reenviada para aprobación |
+
+For a complete description of each status and the transitions between them, see [Request statuses](/reference/request-statuses).
+
+## Exporting data
+
+SIC-HVD does not include a bulk export or report-generation feature. The only export available is per-request PDF generation, which produces a signed PDF for a single approved request. See [PDF export](/reference/pdf-export) for details.
+
+<Note>
+  There is no CSV export, no date-range report, and no cross-request aggregation feature beyond what the dashboard widgets display. If you need detailed reporting, query the database directly or connect a BI tool to the underlying MySQL database.
+</Note>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Capital investment requests" icon="banknotes" href="/user-guide/capital-investment-requests">
+    View, filter, and act on capital investment requests from the list page.
+  </Card>
+  <Card title="Memo requests" icon="document-text" href="/user-guide/memo-requests">
+    View, filter, and act on memo requests from the list page.
+  </Card>
+  <Card title="Request statuses" icon="arrow-path" href="/reference/request-statuses">
+    See the full state machine for request lifecycle transitions.
+  </Card>
+  <Card title="PDF export" icon="document-arrow-down" href="/reference/pdf-export">
+    Generate a signed PDF for an individual approved request.
+  </Card>
+</CardGroup>

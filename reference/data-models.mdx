@@ -1,0 +1,358 @@
+---
+title: "Data models and database schema in SIC-HVD"
+description: "Complete field reference for every Eloquent model in SIC-HVD — types, relationships, casts, and the purpose of each table in the approval workflow."
+---
+
+SIC-HVD stores all business data across fourteen Eloquent models. Every model uses soft deletes (`SoftDeletes` trait), so records marked as deleted remain in the database and can be restored. The schema is defined by the migrations in `database/migrations/`. This page documents each model's fillable fields, casts, and relationships.
+
+## LocalCurrencyRequest
+
+The central model for capital investment requests (`local_currency_request` table). The fields marked with `*` are set automatically by the system and are not in `$fillable`.
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `user_id` | integer (FK) | The originator who created the request |
+| `company_id` | integer (FK) | The company the request belongs to |
+| `request_type_id` | integer (FK) | The request category (see `RequestType`) |
+| `project_name` | string | Name of the capital investment project |
+| `amount` | decimal:2 | Requested investment amount in local currency |
+| `capital_type` | string | Type of capital (e.g., asset acquisition, construction) |
+| `department_id` | integer (FK) | Department responsible for the request |
+| `cost_center_id` | integer (FK) | Cost center that will absorb the investment |
+| `budgeted` | boolean | Whether the investment was included in the annual budget |
+| `investment_description` | text | General description of the investment |
+| `replaced_asset` | string | Asset being replaced, if applicable |
+| `replacement_reason` | text | Reason the existing asset is being replaced |
+| `equipment_use` | text | How the equipment or asset will be used |
+| `alternatives_considered` | text | Alternative approaches that were evaluated |
+| `cost_savings` | text | Expected cost savings from the investment |
+| `risk_no_investment` | text | Risks if the investment is not approved |
+| `other_justifications` | text | Any additional justification |
+| `investment_type` | string | Category: purchase or construction |
+| `local_purchase_category` | decimal:2 | Cost breakdown — local purchase |
+| `imported_purchase_category` | decimal:2 | Cost breakdown — imported purchase |
+| `purchase_freight_category` | decimal:2 | Cost breakdown — freight |
+| `purchase_taxes` | decimal:2 | Cost breakdown — taxes |
+| `other_purchase_category` | decimal:2 | Cost breakdown — other purchase costs |
+| `construction_contract` | decimal:2 | Construction breakdown — contract |
+| `construction_company` | string | Name of the construction company |
+| `construction_labor` | decimal:2 | Construction breakdown — labor |
+| `construction_material` | decimal:2 | Construction breakdown — materials |
+| `construction_equipment_service` | decimal:2 | Construction breakdown — equipment and services |
+| `construction_other` | decimal:2 | Construction breakdown — other costs |
+| `total_investment` | decimal:2 | Sum of all cost breakdown fields |
+| `source_name` | string | Name of the budget source or reference |
+| `source_enterprise` | string | Enterprise providing the source quote |
+| `source_date` | date | Date of the source quote or reference |
+| `source_notes` | text | Notes about the budget source |
+| `exchange_rate` | decimal:2 | Exchange rate used if converting from a foreign currency |
+
+</Expandable>
+
+<Expandable title="Auto-managed fields (not in $fillable)">
+
+| Field | Description |
+|---|---|
+| `application_number` | Unique request number assigned on first submission (format: `PREFIX-YEAR-XXXX`) |
+| `year` | Year the request was submitted, derived at submission time |
+| `correlative_order` | Sequential number within the year, assigned at submission |
+| `status` | Current workflow status (see [Request status reference](/reference/request-statuses)) |
+
+</Expandable>
+
+**Relationships**
+
+- `belongsTo` → `User`, `Company`, `RequestType`, `Department`, `CostCenter`
+- `hasMany` → `LocalCurrencyAttachment`, `LocalCurrencyRequestOption`, `LocalCurrencyReviewHistory`
+
+---
+
+## MemoRequest
+
+The central model for memo requests (`memo_request` table). Simpler than `LocalCurrencyRequest` — memo requests have fewer justification fields and no cost breakdown.
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `user_id` | integer (FK) | The originator who created the request |
+| `department_id` | integer (FK) | Department responsible for the request |
+| `company_id` | integer (FK) | The company the request belongs to |
+| `request_type_id` | integer (FK) | The request category (see `RequestType`) |
+| `project_name` | string | Name of the memo project or initiative |
+| `amount` | decimal:2 | Requested amount |
+| `request_description` | text | Description of what is being requested |
+| `justification` | text | Reason the request is necessary |
+| `alternatives` | text | Alternative approaches considered |
+| `cost_savings_incurred` | text | Expected cost savings |
+| `risk_no_investment` | text | Risks if the request is not approved |
+| `other_justifications` | text | Any additional justification |
+
+</Expandable>
+
+<Expandable title="Auto-managed fields (not in $fillable)">
+
+| Field | Description |
+|---|---|
+| `memo_number` | Unique memo number assigned on first submission |
+| `year` | Year the memo was submitted |
+| `correlative_order` | Sequential number within the year |
+| `status` | Current workflow status |
+
+</Expandable>
+
+**Relationships**
+
+- `belongsTo` → `User`, `Department`, `Company`, `RequestType`
+- `hasMany` → `MemoAttachment`, `MemoReviewHistory`
+
+---
+
+## User
+
+The `users` table. Extends Laravel's `Authenticatable` and implements `FilamentUser`. Roles are managed by Spatie Permission via the `HasRoles` trait — there is no `role` column on the table itself.
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | First name |
+| `last_name` | string | Last name |
+| `email` | string | Login email address (must be unique) |
+| `password` | string | Bcrypt-hashed password (hidden from serialization) |
+| `function` | string | Job title or function displayed in notifications and PDF audit trails |
+
+</Expandable>
+
+**Roles** (managed by Filament Shield)
+
+| Role | Helper method | Description |
+|---|---|---|
+| `super_admin` | `isSuperAdmin()` | Full access to all resources and Shield configuration |
+| `approver` | `isApprover()` | Can review and act on requests assigned to them |
+| `originator` | `isOriginator()` | Can create and resubmit requests |
+
+**Relationships**
+
+- `hasMany` → `LocalCurrencyRequest`, `MemoRequest`
+- `hasMany` → `LocalCurrencyReviewHistory`, `MemoReviewHistory`
+- `hasMany` → `LocalCurrencyAttachment`, `MemoAttachment`
+
+---
+
+## Company
+
+Represents a company entity (`company` table). The `prefix` field is used when generating request numbers (e.g., `HVD` in `HVD-2026-0001`).
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Full company name |
+| `prefix` | string | Short code prefixed to request numbers |
+
+</Expandable>
+
+**Relationships**
+
+- `hasMany` → `LocalCurrencyRequest`, `MemoRequest`
+
+---
+
+## Department
+
+Represents an organizational department (`department` table).
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Department name |
+
+</Expandable>
+
+**Relationships**
+
+- `hasMany` → `User`, `CostCenter`, `LocalCurrencyRequest`, `MemoRequest`
+- `hasMany` → `LocalCurrencyReviewHistory`, `MemoReviewHistory`
+
+---
+
+## CostCenter
+
+A cost center linked to a department (`cost_center` table). Capital investment requests reference a cost center to indicate where the budget impact will be recorded.
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `department_id` | integer (FK) | The department this cost center belongs to |
+| `number` | string | The cost center number or code |
+
+</Expandable>
+
+**Relationships**
+
+- `belongsTo` → `Department`
+- `hasMany` → `LocalCurrencyRequest`
+
+---
+
+## RequestType
+
+A lookup table that categorizes requests (`request_type` table). Both `LocalCurrencyRequest` and `MemoRequest` reference a `RequestType` to classify the nature of the investment or memo.
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Human-readable category name shown in forms and notifications |
+| `type` | string | Internal type identifier |
+
+</Expandable>
+
+**Relationships**
+
+- `hasMany` → `LocalCurrencyRequest`, `MemoRequest`
+
+---
+
+## LocalCurrencyReviewHistory
+
+An audit trail entry for each step in the approval workflow of a capital investment request (`local_currency_review_history` table). A new row is inserted every time a user takes action on a request (submit, approve, return, reject, resubmit).
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `local_currency_request_id` | integer (FK) | The request this history entry belongs to |
+| `user_id` | integer (FK) | The user who performed the action |
+| `department_id` | integer (FK) | The department of the user at the time of the action |
+| `decision` | string | The action taken — maps to a `ReviewStatus` value |
+| `review_status` | string | The resulting status after the decision |
+| `review_comment` | text\|null | Optional comment (required for `return` and `reject` actions) |
+
+</Expandable>
+
+**Relationships**
+
+- `belongsTo` → `LocalCurrencyRequest`, `User`, `Department`
+
+---
+
+## MemoReviewHistory
+
+Identical structure to `LocalCurrencyReviewHistory` but for memo requests (`memo_review_history` table).
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `memo_request_id` | integer (FK) | The memo request this history entry belongs to |
+| `user_id` | integer (FK) | The user who performed the action |
+| `department_id` | integer (FK) | The department of the user at the time of the action |
+| `decision` | string | The action taken — maps to a `ReviewStatus` value |
+| `review_status` | string | The resulting status after the decision |
+| `review_comment` | text\|null | Optional comment (required for `return` and `reject` actions) |
+
+</Expandable>
+
+**Relationships**
+
+- `belongsTo` → `MemoRequest`, `User`, `Department`
+
+---
+
+## LocalCurrencyAttachment
+
+Stores files uploaded to a capital investment request (`local_currency_attachment` table). File contents are stored on disk; this model records metadata.
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `local_currency_request_id` | integer (FK) | The request this file is attached to |
+| `user_id` | integer (FK) | The user who uploaded the file |
+| `file_type` | string | MIME type or file extension |
+| `file_name` | string | Original file name |
+| `file_path` | string | Storage path on disk |
+
+</Expandable>
+
+**Relationships**
+
+- `belongsTo` → `LocalCurrencyRequest`, `User`
+
+---
+
+## MemoAttachment
+
+Identical structure to `LocalCurrencyAttachment` but for memo requests (`memo_attachment` table).
+
+<Expandable title="Fillable fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `memo_request_id` | integer (FK) | The memo request this file is attached to |
+| `user_id` | integer (FK) | The user who uploaded the file |
+| `file_type` | string | MIME type or file extension |
+| `file_name` | string | Original file name |
+| `file_path` | string | Storage path on disk |
+
+</Expandable>
+
+**Relationships**
+
+- `belongsTo` → `MemoRequest`, `User`
+
+---
+
+## RequestOption and LocalCurrencyRequestOption
+
+These two models work together to represent the budget qualification options (A, B, C, D) on a capital investment request.
+
+**`RequestOption`** (`request_option` table) — a master lookup of option labels:
+
+<Expandable title="RequestOption fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `option_text` | string | The label text for this option (e.g., option A, B, C, or D) |
+
+</Expandable>
+
+**`LocalCurrencyRequestOption`** (`local_currency_request_option` table) — the per-request instance of an option:
+
+<Expandable title="LocalCurrencyRequestOption fields">
+
+| Field | Type | Description |
+|---|---|---|
+| `request_option_id` | integer (FK) | Which option definition (A/B/C/D) this row represents |
+| `local_currency_request_id` | integer (FK) | The request this option belongs to |
+| `entered_text` | string\|null | The amount or text the originator typed for this option |
+| `selected` | boolean | Whether the originator checked this option |
+
+</Expandable>
+
+The four option definitions are configured in `app/Support/RequestOptions.php`:
+
+| Key | Prefix text | Has input | Input type |
+|---|---|---|---|
+| `a` | A. Presupuestado por L. | yes | money |
+| `b` | B. La solicitud actual excede el monto presupuestado en | yes | money |
+| `c` | C. Esta SIC no fue presupuestada, sustituir de | yes | text |
+| `d` | D. Esta SIC no fue presupuestada, y no existe fondo en el departamento | no | — |
+
+<Note>
+  Option D has no editable input (`has_input: false`). If the originator selects it, only the prefix text is recorded.
+</Note>
+
+## Related pages
+
+- [Request status reference](/reference/request-statuses)
+- [Architecture overview](/reference/architecture-overview)
+- [Capital investment requests](/user-guide/capital-investment-requests)
+- [Memo requests](/user-guide/memo-requests)
+- [Attachments and options](/user-guide/attachments-and-options)

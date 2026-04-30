@@ -1,0 +1,141 @@
+---
+title: "PDF export for finalized requests"
+description: "How SIC-HVD generates signed PDF exports for approved and rejected capital investment and memo requests using barryvdh/laravel-dompdf."
+---
+
+Once a capital investment request or memo request reaches a terminal status — `approved` or `rejected` — SIC-HVD can render a PDF version of the complete request, including all form fields, budget options, and the full approval audit trail. The PDF is streamed directly to the browser, where you can print or save it.
+
+## When PDF export is available
+
+PDF generation is only available for requests in `approved` or `rejected` status. Draft, pending, returned, and resubmitted requests do not have a print button.
+
+| Status | PDF available |
+|---|---|
+| `draft` | No |
+| `pending` | No |
+| `returned` | No |
+| `resubmitted` | No |
+| `approved` | **Yes** |
+| `rejected` | **Yes** |
+
+## Routes
+
+Two routes handle PDF generation, one per request type. Both are defined in `routes/web.php`.
+
+| Route | Controller | Route name |
+|---|---|---|
+| `GET /local-currency-requests/{localCurrencyRequest}/pdf` | `LocalCurrencyRequestPdfController` | `requests.local_currency_request` |
+| `GET /memo-request/{memoRequest}/pdf` | `MemoRequestPdfController` | `requests.memo_request` |
+
+Both routes use route model binding — the `{localCurrencyRequest}` and `{memoRequest}` path segments are resolved to the corresponding Eloquent model instances automatically.
+
+## Signed URLs and access control
+
+Both PDF routes are protected by the `ValidateSignature` middleware:
+
+```php
+Route::get('/local-currency-requests/{localCurrencyRequest}/pdf', ...)
+    ->middleware(\Illuminate\Routing\Middleware\ValidateSignature::class)
+    ->name('requests.local_currency_request');
+```
+
+This means **the URL must be cryptographically signed** by Laravel to be valid. A URL that is:
+
+- constructed manually without a signature
+- altered in any way after signing
+- expired (if generated with an expiry time)
+
+will return an **HTTP 403 Forbidden** response.
+
+<Warning>
+  Copying a PDF URL from your browser's address bar and sharing it directly will not work. The recipient must generate a new signed URL from within the application.
+</Warning>
+
+## How to generate a PDF
+
+1. Open an approved or rejected request in the Filament panel (`/sic_hvd`).
+2. Click the **Print request** button visible on the request detail page.
+3. The application generates a signed URL and opens the PDF in a new browser tab.
+4. Use your browser's print dialog to save the PDF or send it to a printer.
+
+The signed URL is generated server-side by the Filament action and is valid for the duration of your session.
+
+## PDF generation: DomPDF
+
+PDF rendering uses the `barryvdh/laravel-dompdf` package (version ^3.1). Each controller loads the request with all its relationships in a single eager-loaded query, then passes the data to a Blade view:
+
+**Capital investment request:**
+
+```php
+$localCurrencyRequest->load([
+    'user',
+    'company',
+    'department',
+    'cost_center',
+    'request_type',
+    'local_currency_request_options.request_option',
+    'local_currency_attachment',
+    'local_currency_review_history.user'
+]);
+
+$pdf = Pdf::loadView('requests.local_currency_request', [
+    'request' => $localCurrencyRequest,
+    'rows'    => $rows,
+])->setPaper('letter');
+
+return $pdf->stream("solicitud_moneda_local_{$application_number}.pdf");
+```
+
+**Memo request:**
+
+```php
+$memoRequest->load([
+    'user',
+    'company',
+    'department',
+    'request_type',
+    'memo_attachment',
+    'memo_review_history.user'
+]);
+
+$pdf = Pdf::loadView('requests.memo_request', [
+    'request' => $memoRequest,
+    'rows'    => $rows,
+])->setPaper('letter');
+
+return $pdf->stream("solicitud_memo_{$memo_number}.pdf");
+```
+
+The paper size is set to `letter` (8.5 × 11 inches). The PDF is streamed inline to the browser rather than forced as a download, so it renders in the browser's built-in PDF viewer.
+
+## Audit trail in the PDF
+
+The `$rows` variable passed to each Blade view is a processed version of the review history. Each row contains:
+
+| Field | Description |
+|---|---|
+| `name` | Full name of the user who took the action |
+| `function` | Job function of that user at the time of the action |
+| `status` | Human-readable status label (e.g., `"Aprobado por Supervisor"`, `"Devuelto por Analista Financiero"`) |
+| `comment` | The reviewer's comment, or `"—"` if none was provided |
+| `date` | Timestamp in `d/m/Y h:i:s A` format |
+
+For `submitted` rows, the name is always taken from `$record->user` (the originator). For `resubmitted` rows, the name reflects the user who made the correction, which may differ from the original creator.
+
+## File naming
+
+The downloaded file is named using the request's assigned number:
+
+| Request type | File name pattern |
+|---|---|
+| Capital investment | `solicitud_moneda_local_{application_number}.pdf` |
+| Memo | `solicitud_memo_{memo_number}.pdf` |
+
+If a number has not been assigned (edge case), the file name falls back to `solicitud_moneda_local_#-{id}.pdf` or `solicitud_memo_#-{id}.pdf`.
+
+## Related pages
+
+- [Capital investment requests](/user-guide/capital-investment-requests)
+- [Memo requests](/user-guide/memo-requests)
+- [Request status reference](/reference/request-statuses)
+- [Architecture overview](/reference/architecture-overview)

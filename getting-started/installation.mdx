@@ -1,0 +1,118 @@
+---
+title: "Install SIC-HVD for local development"
+description: "Set up SIC-HVD on your local machine with PHP, Composer, and Node.js to develop and test capital investment and memo approval workflows."
+---
+
+SIC-HVD is a Laravel + Filament application. To run it locally you need PHP, Composer, Node.js, and a database. SQLite works out of the box for development; MySQL is recommended for production. Follow the steps below to go from a fresh clone to a running application.
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- **PHP 8.2 or higher** with the `pdo_sqlite` or `pdo_mysql` extension enabled
+- **Composer** (latest stable)
+- **Node.js 18+** and **npm**
+- **SQLite** (for local development) or **MySQL 8.0** (for production-like setups)
+
+## Installation steps
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repository-url> sic-hvd
+    cd sic-hvd
+    ```
+  </Step>
+
+  <Step title="Install PHP dependencies">
+    ```bash
+    composer install
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example environment file and generate the application key:
+
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+
+    Open `.env` and review the values. For local development the defaults work with SQLite. See [Configure SIC-HVD environment variables](/getting-started/environment-configuration) for a full reference.
+  </Step>
+
+  <Step title="Run database migrations">
+    ```bash
+    php artisan migrate
+    ```
+
+    SQLite creates the database file automatically at `database/database.sqlite`. For MySQL, configure `DB_*` variables in `.env` first.
+  </Step>
+
+  <Step title="Install and build frontend assets">
+    ```bash
+    npm install && npm run build
+    ```
+  </Step>
+
+  <Step title="Seed the database">
+    ```bash
+    php artisan db:seed
+    ```
+
+    <Note>
+      The seeder creates an initial `super_admin` user with email `admin@admin.com` and password `admin`. Change this password immediately after your first login.
+    </Note>
+  </Step>
+
+  <Step title="Start the development server">
+    <CodeGroup>
+
+    ```bash Single server
+    php artisan serve
+    ```
+
+    ```bash Full stack (recommended)
+    composer run dev
+    ```
+
+    </CodeGroup>
+
+    The application is available at `http://localhost:8000`. The Filament admin panel is at `http://localhost:8000/sic_hvd`.
+  </Step>
+</Steps>
+
+## Shortcut: one-command setup
+
+The `setup` script in `composer.json` runs steps 2–5 above in sequence:
+
+```bash
+composer run setup
+```
+
+This installs PHP dependencies, copies `.env.example` if no `.env` exists, generates the application key, runs migrations, installs Node packages, and builds frontend assets. You still need to run `php artisan db:seed` separately after setup completes.
+
+## Full-stack development mode
+
+`composer run dev` uses `concurrently` to start four processes at once:
+
+```bash
+composer run dev
+```
+
+| Process | Description |
+|---------|-------------|
+| `php artisan serve` | Laravel development server |
+| `php artisan queue:listen` | Processes queued jobs (approval notifications) |
+| `php artisan pail` | Tails application logs in the terminal |
+| `npm run dev` | Vite HMR for frontend assets |
+
+<Tip>
+  Running the queue listener locally is important because approval notifications are dispatched as queued jobs. Without it, emails will not be sent during local testing.
+</Tip>
+
+## Next steps
+
+- [Configure environment variables](/getting-started/environment-configuration) — set up mail, database, and queue settings
+- [Deploy with Docker](/getting-started/docker-deployment) — containerised production deployment
+- [Approval workflow](/user-guide/approval-workflow) — understand multi-step approval flows

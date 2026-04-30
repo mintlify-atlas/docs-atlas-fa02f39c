@@ -1,0 +1,179 @@
+---
+title: "Set up companies, departments, and cost centers"
+description: "Configure the organizational hierarchy in SIC-HVD — companies, departments, cost centers, and request types — before users can submit requests."
+---
+
+SIC-HVD models your organization as a four-level hierarchy: **companies** at the top, **departments** within each company, **cost centers** within each department, and **request types** that classify what a request is for. Every capital investment request and memo request must be linked to a company and a department; capital investment requests additionally require a cost center and a request type. You must set up this hierarchy before users can submit their first request.
+
+All four resources are available in the left sidebar under their respective labels and are accessible only to users with the `super_admin` role.
+
+## Organizational hierarchy
+
+- **Company** (`prefix`, `name`)
+  - **Department** (`name`)
+    - **Cost center** (`number`, linked to a department)
+  - **Request type** (`name`, `type`) — applies to all companies
+
+<Note>
+  Departments and cost centers in the current data model do not carry a direct foreign key to a company. Departments are shared across the system; the company association happens at the request level, where both a company and a department are selected independently.
+</Note>
+
+## Companies
+
+A company record represents a legal entity or business unit within your organization. Every request is tagged with the company on whose behalf it is submitted.
+
+### Fields
+
+| Field | Label in UI | Constraints | Description |
+|---|---|---|---|
+| `name` | Nombre | Required, max 50 characters | The full company name displayed throughout the panel. |
+| `prefix` | Prefijo Compañia | Required, max 3 characters | A short uppercase code included in automatically generated application numbers. |
+
+### Application number format
+
+When a request is created, SIC-HVD generates a unique application number using the company prefix:
+
+```text
+PREFIX-YEAR-XXXX
+```
+
+For example, a request submitted in 2025 for a company with prefix `HVD` would produce a number like `HVD-2025-0001`. The prefix must be unique per company to avoid numbering collisions across entities.
+
+### Creating a company
+
+<Steps>
+  <Step title="Open Companies">
+    In the sidebar, click **Compañías**.
+  </Step>
+  <Step title="Click New company">
+    Click **Nueva Compañía** in the top-right corner.
+  </Step>
+  <Step title="Fill in name and prefix">
+    Enter the full company name in **Nombre** and a short code (up to 3 characters) in **Prefijo Compañia**.
+  </Step>
+  <Step title="Save">
+    Click **Crear Compañía**. The company is now available in the company selector on request forms.
+  </Step>
+</Steps>
+
+## Departments
+
+A department record represents an internal organizational unit such as Finance, IT, or Operations. Requests are attributed to a department to support routing and reporting.
+
+### Fields
+
+| Field | Label in UI | Constraints | Description |
+|---|---|---|---|
+| `name` | Nombre | Required, max 80 characters | The full department name shown in request forms and reports. |
+
+### Creating a department
+
+<Steps>
+  <Step title="Open Departments">
+    In the sidebar, click **Departamentos**.
+  </Step>
+  <Step title="Click New department">
+    Click **Nuevo Departamento** in the top-right corner.
+  </Step>
+  <Step title="Enter the name">
+    Enter the department name in the **Nombre** field.
+  </Step>
+  <Step title="Save">
+    Click **Crear Departamento**. The department is now selectable when submitting requests.
+  </Step>
+</Steps>
+
+## Cost centers
+
+A cost center is a numeric identifier linked to a specific department. Capital investment requests require a cost center to attribute spending to the correct budget line.
+
+### Fields
+
+| Field | Label in UI | Constraints | Description |
+|---|---|---|---|
+| `department_id` | Departamento | Required | The department this cost center belongs to. Selected from a dropdown of existing departments. |
+| `number` | Numero del Centro de Costo | Required, integer | The numeric code identifying the cost center in your accounting system. |
+
+### Creating a cost center
+
+<Steps>
+  <Step title="Open Cost centers">
+    In the sidebar, click **Centros de Costo**.
+  </Step>
+  <Step title="Click New cost center">
+    Click **Nuevo Centro de Costo** in the top-right corner.
+  </Step>
+  <Step title="Select the department">
+    Use the **Departamento** dropdown to choose which department owns this cost center. You must create the department first before it appears here.
+  </Step>
+  <Step title="Enter the number">
+    Enter the cost center number in **Numero del Centro de Costo**.
+  </Step>
+  <Step title="Save">
+    Click **Crear Centro de Costo**.
+  </Step>
+</Steps>
+
+## Request types
+
+Request types categorize what a capital investment or memo request is for — for example, "Hardware Acquisition" or "Software License". Each request type is linked to exactly one of the two request categories (`local_currency_request` or `memo_request`), so the selector on each form only shows types relevant to that request category.
+
+### Fields
+
+| Field | Label in UI | Constraints | Description |
+|---|---|---|---|
+| `name` | Nombre | Required, max 50 characters | A descriptive label shown to originators when selecting the type. |
+| `type` | Tipo de solicitud | Required | Either `Solicitud de Inversion de Capital` (maps to `local_currency_request`) or `Solicitud Memo` (maps to `memo_request`). |
+
+### Creating a request type
+
+<Steps>
+  <Step title="Open Request types">
+    In the sidebar, click **Tipos de Proyecto**.
+  </Step>
+  <Step title="Click New request type">
+    Click **Nuevo Tipo de Proyecto** in the top-right corner.
+  </Step>
+  <Step title="Enter the name">
+    Enter a descriptive name in the **Nombre** field.
+  </Step>
+  <Step title="Select the category">
+    In **Tipo de solicitud**, choose whether this type applies to capital investment requests or memo requests. This determines which request form will display it.
+  </Step>
+  <Step title="Save">
+    Click **Crear Tipo de Proyecto**.
+  </Step>
+</Steps>
+
+## How these relate on a request
+
+When an originator submits a request, they select organizational context from the hierarchy you have configured:
+
+```
+Company  ──►  Department  ──►  Cost center   (capital investment requests only)
+                      │
+                      └──►  Request type
+```
+
+If any of these records are missing or soft-deleted, they will not appear in the selectors and originators will not be able to submit requests that require them. Always verify the hierarchy is complete before onboarding users.
+
+<Tip>
+  All four resources — companies, departments, cost centers, and request types — use soft deletes. Removing a record hides it from selectors and prevents new requests from using it, but does not affect existing requests that were already linked to it.
+</Tip>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Capital investment requests" icon="banknotes" href="/user-guide/capital-investment-requests">
+    See how company, department, cost center, and request type appear on the SIC form.
+  </Card>
+  <Card title="Memo requests" icon="document-text" href="/user-guide/memo-requests">
+    See how company and department are used on memo request forms.
+  </Card>
+  <Card title="User management" icon="users" href="/user-guide/user-management">
+    Create user accounts and assign roles once the organizational hierarchy is in place.
+  </Card>
+  <Card title="Data models" icon="circle-stack" href="/reference/data-models">
+    Explore the database schema for Company, Department, CostCenter, and RequestType.
+  </Card>
+</CardGroup>

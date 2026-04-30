@@ -1,0 +1,112 @@
+---
+title: 'How the approval workflow works in SIC-HVD'
+description: 'Understand the multi-step approval chain for capital investment and memo requests, from draft creation to final approval or rejection.'
+---
+
+Every capital investment request and memo request in SIC-HVD passes through a structured multi-step approval process. This workflow ensures that each request is reviewed by the correct people in the right order before it is finalized, providing a clear audit trail of all decisions made along the way.
+
+## Request lifecycle
+
+A request moves through the following statuses as it progresses through the workflow:
+
+| Status | Value | Description |
+|---|---|---|
+| **Borrador** | `draft` | The request has been created but not yet submitted for approval. Only the originator can edit it. |
+| **Pendiente de aprobar** | `pending` | The request has been submitted and is waiting for a reviewer to act. |
+| **Aprobada** | `approved` | The final supervisor has approved the request. The workflow is complete. |
+| **Devuelta** | `returned` | A reviewer has sent the request back with a required comment. The previous holder must edit and resubmit. |
+| **Rechazada** | `rejected` | A reviewer has rejected the request. The workflow closes permanently. |
+| **Reenviada para aprobación** | `resubmitted` | A returned request has been corrected and sent back into the approval chain. |
+
+```text
+Draft → Pending → Approved
+                ↓
+             Returned → Resubmitted → Pending → ...
+                ↓
+             Rejected (workflow closed)
+```
+
+<Note>
+  A request number in `PREFIX-YEAR-XXXX` format (for example, `HVD-2026-0001`) is assigned the first time the originator submits the request for approval. Draft requests do not yet have a number.
+</Note>
+
+## Approval chain for capital investment requests
+
+Capital investment requests follow a fixed sequence of approvers. The system restricts each step so that only users with the correct function can appear as options at each point in the chain.
+
+<Steps>
+  <Step title="Originator submits to Director Ejecutivo">
+    The originator opens the draft, clicks **Enviar a aprobación**, and selects a user with the **Director Ejecutivo** function. The request status changes to `pending` and the Director Ejecutivo receives an email and an in-app notification.
+  </Step>
+  <Step title="Director Ejecutivo forwards to Supervisor or Gerente IT SFH">
+    The Director Ejecutivo reviews the request and clicks **Aprobar**. The system offers two routes: they can forward to a **Supervisor** or to a **Gerente IT SFH**. The Director Ejecutivo selects the next approver from the available options and optionally adds a comment.
+  </Step>
+  <Step title="Supervisor or Gerente IT SFH forwards to Analista Financiero">
+    Whichever route was taken in step 2, the assigned approver reviews the request and clicks **Aprobar**, then selects an **Analista Financiero** as the next reviewer.
+  </Step>
+  <Step title="Analista Financiero forwards to Supervisor (final step)">
+    The Analista Financiero reviews the request and clicks **Aprobar**, then selects a **Supervisor** to perform the final review. This supervisor is distinct from the one that may have appeared in step 2 — the system detects that the current pending assignment immediately follows an Analista Financiero, marking it as the final step.
+  </Step>
+  <Step title="Final Supervisor approves or rejects">
+    The final Supervisor reviews the request. Because this is the closing step, the **Enviar a:** selector does not appear. The Supervisor clicks **Aprobar** to finalize the request (status becomes `approved`) or **Rechazar** to close the workflow permanently (status becomes `rejected`).
+  </Step>
+</Steps>
+
+<Note>
+  The memo request workflow follows the same approval chain and the same set of approver functions.
+</Note>
+
+## Reviewer actions
+
+<Tabs>
+  <Tab title="As an originator">
+    When you create a request, it starts in **Borrador** status. From the request detail page you can:
+
+    - **Edit** the form fields and attachments while the request is a draft.
+    - Click **Enviar a aprobación** to submit the request to the first approver (Director Ejecutivo). A confirmation dialog appears before the request is sent.
+    - If a reviewer returns your request, you can edit it and click **Enviar a aprobación** again to resubmit.
+
+    You receive an in-app notification and email every time an approver acts on your request, so you always know the current state.
+  </Tab>
+  <Tab title="As an approver">
+    When a request is assigned to you, it appears in your pending list and you receive an email and a bell notification. Open the request to see the full details, then choose one of three actions:
+
+    **Aprobar**
+    - Marks your step as approved and moves the request to the next approver.
+    - You can add an optional comment.
+    - At all steps except the final supervisor step, you must select the next approver from the dropdown. The dropdown is pre-filtered to show only users valid for the next step in the chain.
+    - At the final supervisor step, no next-approver selection is needed — clicking **Aprobar solicitud** finalizes the request.
+
+    **Devolver**
+    - Sends the request back to the person who previously held it (the immediate predecessor in the review history).
+    - A comment is required before you can submit the return.
+    - The request status becomes `returned` and the previous holder is notified.
+
+    **Rechazar**
+    - Closes the workflow permanently. No further action is possible on the request.
+    - A comment is required before you can submit the rejection.
+    - All pending assignments are cleared and the originator is notified.
+  </Tab>
+</Tabs>
+
+## Returned requests and resubmission
+
+When a reviewer clicks **Devolver**, the system automatically routes the request back to the person who previously held the pending assignment — not always the original creator. The return targets the immediate predecessor in the review history.
+
+The person who receives the returned request can:
+
+1. Open the request from their list (the status shows **Devuelta**).
+2. Edit the form fields and attachments as needed.
+3. Click **Enviar a aprobación** to resubmit. The dropdown shows the correct next approver for that point in the chain.
+
+<Warning>
+  After resubmission, the request re-enters the approval chain from the point of the return, not from the beginning. The review history preserves all previous decisions.
+</Warning>
+
+## Related pages
+
+- [Capital investment requests](/user-guide/capital-investment-requests)
+- [Memo requests](/user-guide/memo-requests)
+- [Roles and permissions](/user-guide/roles-and-permissions)
+- [Notifications and email alerts](/user-guide/notifications)
+- [Request statuses reference](/reference/request-statuses)

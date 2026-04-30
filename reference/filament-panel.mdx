@@ -1,0 +1,128 @@
+---
+title: "Filament panel configuration reference"
+description: "Panel ID, URL, registered resources, dashboard widgets, Shield integration, and branding settings for the SIC-HVD Filament admin panel."
+---
+
+SIC-HVD exposes all its functionality through a single Filament v5 admin panel. The panel is configured in `app/Providers/Filament/AdminPanelProvider.php` and is accessible at `/sic_hvd`. Every resource, widget, and page is auto-discovered from the `app/Filament/` directory at boot time.
+
+## Panel identity
+
+| Setting | Value |
+|---|---|
+| Panel ID | `sic_hvd` |
+| URL path | `/sic_hvd` |
+| Brand name | SIC |
+| Logo | `/images/logo_portada.png` (shown after login) |
+| Favicon | `/images/icono_aprobar.png` |
+| Home URL | Disabled (`homeUrl(false)`) |
+| Global search | Disabled |
+
+<Note>
+  The panel ID `sic_hvd` is important beyond routing. It is the argument you pass to `shield:generate` when generating permissions: `php artisan shield:generate --panel=sic_hvd`. It also appears in the Shield resource URL prefix.
+</Note>
+
+## Authentication
+
+The panel enables two built-in Filament authentication features:
+
+| Feature | Description |
+|---|---|
+| Login page | Enabled via `.login()`. Available at `/sic_hvd/login`. |
+| Password reset | Enabled via `.passwordReset()`. Users can request a reset link from the login page. |
+
+Authentication is enforced by the `Filament\Http\Middleware\Authenticate` middleware on all panel routes.
+
+## Registered resources
+
+Resources are auto-discovered from `app/Filament/Resources/`. Each resource manages one Eloquent model and provides list, create, edit, and view pages.
+
+| Resource class | Model | Description |
+|---|---|---|
+| `LocalCurrencyRequestResource` | `LocalCurrencyRequest` | Capital investment requests — creation, submission, approval workflow, and PDF export |
+| `MemoRequestResource` | `MemoRequest` | Memo requests — same workflow as capital investment requests |
+| `UserResource` | `User` | User management — create accounts, assign roles, set job function |
+| `CompanyResource` | `Company` | Company management — name and prefix used in request numbering |
+| `DepartmentResource` | `Department` | Department management — linked to users, cost centers, and requests |
+| `CostCenterResource` | `CostCenter` | Cost center management — linked to departments and capital requests |
+| `RequestTypeResource` | `RequestType` | Request type / category management — shared by both request types |
+| `RequestOptionResource` | `RequestOption` | Budget option master records — the A/B/C/D options attached to capital requests |
+
+## Dashboard widgets
+
+Widgets are auto-discovered from `app/Filament/Widgets/`. Four widgets appear on the dashboard:
+
+| Widget class | Description |
+|---|---|
+| `LocalCurrencyRequestStatusOverview` | Summary card counts for capital investment requests by status |
+| `MemoRequestStatusOverview` | Summary card counts for memo requests by status |
+| `MonthlyRequestsChart` | Bar or line chart showing the number of requests created per month |
+| `MonthlyApprovalsRequestChart` | Chart showing the number of requests approved per month |
+
+## Filament Shield integration
+
+[Filament Shield](https://github.com/bezhanSalleh/filament-shield) manages roles and permissions for the panel. It is registered as a plugin in `AdminPanelProvider`:
+
+```php
+->plugins([
+    FilamentShieldPlugin::make(),
+])
+```
+
+Shield generates Spatie Permission records for every resource and page in the panel. To (re)generate permissions after adding a new resource, run:
+
+```bash
+php artisan shield:generate --panel=sic_hvd
+```
+
+The three application roles — `super_admin`, `approver`, and `originator` — are assigned per-user from the **Users** resource. See [Roles and permissions](/user-guide/roles-and-permissions) for the access matrix.
+
+## Database notifications
+
+The panel enables Filament's built-in database notification bell:
+
+```php
+->databaseNotifications()
+```
+
+This renders a bell icon in the top navigation bar. When a new notification arrives (for example, when a request is submitted for your review), the bell updates in real time because `sendToDatabase` is called with `isEventDispatched: true`. Clicking a notification and selecting the action button marks it as read.
+
+<Tip>
+  Database notifications require the `notifications` table, created by the migration `2026_04_08_143147_create_notifications_table.php`. Make sure you have run `php artisan migrate` before testing notifications.
+</Tip>
+
+## Branding
+
+The brand logo is rendered as an inline HTML block that is only shown after the user is authenticated (`Auth::check()`). It displays the company logo image alongside the text "SIC". On the login page, the logo block is hidden and only the brand name is shown:
+
+```php
+->brandName('SIC')
+->brandLogo(
+    fn (): ?HtmlString => Auth::check()
+        ? new HtmlString('...<img src="/images/logo_portada.png">...')
+        : null
+)
+->brandLogoHeight('5rem')
+```
+
+## Panel middleware stack
+
+The following middleware runs on every panel request:
+
+```php
+EncryptCookies::class,
+AddQueuedCookiesToResponse::class,
+StartSession::class,
+AuthenticateSession::class,
+ShareErrorsFromSession::class,
+VerifyCsrfToken::class,
+SubstituteBindings::class,
+DisableBladeIconComponents::class,
+DispatchServingFilamentEvent::class,
+```
+
+## Related pages
+
+- [Architecture overview](/reference/architecture-overview)
+- [Roles and permissions](/user-guide/roles-and-permissions)
+- [User management](/user-guide/user-management)
+- [Dashboard and reports](/user-guide/dashboard-and-reports)

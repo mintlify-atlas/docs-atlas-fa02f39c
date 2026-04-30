@@ -1,0 +1,195 @@
+---
+title: "Deploy SIC-HVD with Docker"
+description: "Build and run SIC-HVD in production using the multi-stage Docker image with FrankenPHP, Octane, MySQL, Redis, and an isolated queue worker."
+---
+
+SIC-HVD ships with a production-ready Docker setup built on [FrankenPHP](https://frankenphp.dev/) and Laravel Octane. The image uses a multi-stage build to compile PHP extensions and Vite assets in a builder stage, then copies the result into a lean FrankenPHP runtime image. A `docker-compose.yml` file wires together the web server, a dedicated queue worker, MySQL 8, and Redis.
+
+## Prerequisites
+
+- **Docker** 24 or higher
+- **Docker Compose** v2 (`docker compose` command)
+
+## How the image is structured
+
+The Dockerfile has two stages:
+
+| Stage | Base image | Purpose |
+|-------|-----------|---------|
+| `builder` | `php:8.4-fpm-alpine` | Installs system libraries, compiles PHP extensions (`intl`, `zip`, `pcntl`, `pdo_mysql`, `bcmath`, `gd`), runs `composer install --no-dev`, and builds Vite assets with `npm run build` |
+| Production | `dunglas/frankenphp:1.4-php8.4-alpine` | Copies the fully-built `/app` directory from the builder stage, installs runtime PHP extensions via `install-php-extensions`, and starts Octane on port 8081 |
+
+The production image does not include Composer, Node.js, or any development tooling — only the compiled output from the builder stage.
+
+## Deployment steps
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repository-url> sic-hvd
+    cd sic-hvd
+    ```
+  </Step>
+
+  <Step title="Create and configure the environment file">
+    ```bash
+    cp .env.example .env
+    ```
+
+    Edit `.env` for production. At minimum, set these values:
+
+    ```env
+    APP_NAME="SIC-HVD"
+    APP_ENV=production
+    APP_KEY=                # generate with: php artisan key:generate --show
+    APP_DEBUG=false
+    APP_URL=https://your-domain.com
+
+    DB_CONNECTION=mysql
+    DB_HOST=db
+    DB_PORT=3306
+    DB_DATABASE=app
+    DB_USERNAME=app
+    DB_PASSWORD=secret
+
+    QUEUE_CONNECTION=redis
+
+    REDIS_HOST=redis
+    REDIS_PORT=6379
+    ```
+
+    <Warning>
+      Never set `APP_DEBUG=true` in production. Debug mode exposes application internals including environment variables in error pages.
+    </Warning>
+
+    See [Configure SIC-HVD environment variables](/getting-started/environment-configuration) for all available variables, including mail settings required for approval notifications.
+  </Step>
+
+  <Step title="Build the Docker image">
+    ```bash
+    docker build -t sic-hvd .
+    ```
+
+    The multi-stage build downloads dependencies and compiles assets inside the container, so your local machine only needs Docker — no PHP or Node.js required.
+  </Step>
+
+  <Step title="Start all services with Docker Compose">
+    ```bash
+    docker compose up -d
+    ```
+
+    Docker Compose starts four services. The `web` and `queue` services wait for MySQL and Redis health checks to pass before they start.
+
+    To run database migrations and seed the initial user on first deploy:
+
+    ```bash
+    docker compose exec web php artisan migrate --force
+    docker compose exec web php artisan db:seed
+    ```
+
+    <Note>
+      The seeder creates a `super_admin` user at `admin@admin.com` with password `admin`. Change this password immediately after first login.
+    </Note>
+  </Step>
+</Steps>
+
+## docker-compose.yml
+
+```yaml
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - storage_data:/app/storage
+    ports:
+      - "8081:8081"
+    networks:
+      - default
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=120", "--sleep=1", "--max-time=3600"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - storage_data:/app/storage
+    networks:
+      - default
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - default
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_USER: app
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: rootsecret
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - default
+
+volumes:
+  db_data:
+  storage_data:
+```
+
+## Port and service notes
+
+- **Port 8081** — Octane listens on port 8081 inside the container (`ENV SERVER_NAME=:8081`). Docker Compose maps this to host port 8081. Place a reverse proxy (Nginx, Caddy, Traefik) in front if you need TLS termination or a different public port.
+- **Queue worker** — The `queue` service runs a separate container from the same image, executing only `php artisan queue:work`. This is required for approval notification emails to be dispatched asynchronously. Set `QUEUE_CONNECTION=redis` in production.
+- **Storage volume** — `storage_data` is a named volume shared between `web` and `queue` so that both containers can read and write uploaded files and logs.
+- **MySQL** — The `pdo_mysql` extension is installed in both the builder and production stages. The default compose credentials (`app`/`secret`) are suitable for local testing only; use strong passwords and secrets management in production.
+
+## Production considerations
+
+| Item | Recommendation |
+|------|---------------|
+| `APP_KEY` | Generate once with `php artisan key:generate --show` and store securely. Do not rotate without re-encrypting stored data. |
+| `APP_ENV` | Set to `production` to disable debug output and enable caching. |
+| `APP_DEBUG` | Set to `false`. |
+| Database passwords | Replace the default `secret` / `rootsecret` values in both `.env` and `docker-compose.yml` before deploying. |
+| Mail | Configure `MAIL_*` variables so that approval workflow notifications are delivered. See [Mail and notifications](/reference/mail-and-notifications). |
+| Redis password | Set `REDIS_PASSWORD` in `.env` and configure the Redis service with `requirepass` if the Redis container is exposed. |
+
+## Next steps
+
+- [Configure environment variables](/getting-started/environment-configuration) — complete variable reference
+- [Approval workflow](/user-guide/approval-workflow) — understand how notifications are triggered
+- [Roles and permissions](/user-guide/roles-and-permissions) — manage user access after first deploy

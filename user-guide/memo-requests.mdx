@@ -1,0 +1,147 @@
+---
+title: "Submit and manage memo requests"
+description: "Learn how to create, submit, and track memo requests for operational expenditures that follow a separate approval workflow from SIC requests."
+---
+
+A memo request (*Solicitud Memo*) is used to seek approval for operational expenditures, service engagements, or other non-capital investments that do not require the detailed asset and investment breakdown of a capital investment request (SIC). Memo requests share the same multi-step approval workflow and status lifecycle as SIC requests, but have a shorter, simpler form focused on a narrative description and justification.
+
+<Note>
+  Only users with the **originator** role can create memo requests. If **Solicitudes Memo** does not appear in the sidebar, contact your administrator. See [Roles and permissions](/user-guide/roles-and-permissions).
+</Note>
+
+## Creating a memo request
+
+<Steps>
+  <Step title="Open the memo request list">
+    In the left navigation sidebar, click **Solicitudes Memo**. The table lists all memo requests you have access to.
+  </Step>
+
+  <Step title="Start a new request">
+    Click **New** (or **Nuevo**) in the top-right corner. The form opens with status set to **Borrador** (Draft) and your name pre-filled in the **Creado por** field.
+  </Step>
+
+  <Step title="Fill in the basic information">
+    Complete the fields in the **Formulario** section:
+
+    | Field | Description |
+    |---|---|
+    | **Compañia** | Select the company this request belongs to (`company_id`). |
+    | **Tipo de proyecto** | Select the project type. Only types configured for memo requests appear in this list (`request_type_id`). |
+    | **Nombre del proyecto** | Enter a descriptive project name (maximum 90 characters) (`project_name`). |
+    | **Monto** | Enter the requested amount in Honduran lempiras (L.). This field is optional (`amount`). |
+    | **Departamento** | Select the department making the request (`department_id`). |
+
+    <Note>
+      The **user_id** (your account) is recorded automatically when you save the request. You do not need to select it.
+    </Note>
+  </Step>
+
+  <Step title="Write the request description and justification">
+    In the **Información general** section, complete all narrative fields using the rich-text editor. Bold text, bullet lists, and alignment tools are available.
+
+    | Field | Description |
+    |---|---|
+    | **Descripción de la solicitud** | Explain what is being requested and why it is needed (`request_description`). |
+    | **Justificación** | Provide the business rationale for the request (`justification`). |
+    | **Alternativas consideradas** | Document alternatives evaluated before making this request, such as using existing resources or sourcing from a different supplier (`alternatives`). |
+    | **Posibles ahorros y/o costos a incurrir** | Quantify expected savings or additional costs resulting from the approval (`cost_savings_incurred`). |
+    | **Riesgo de no hacer la inversión** | Describe what operational or financial risk arises if this request is not approved (`risk_no_investment`). |
+    | **Otras justificaciones de relevancia** | Include any additional supporting information. Use an extra sheet if necessary (`other_justifications`). |
+  </Step>
+
+  <Step title="Upload supporting files">
+    Use the **Subir la evidencia correspondiente** file uploader to attach supporting documents. Multiple files are supported. Accepted formats: PDF, Excel (.xls / .xlsx), Word (.doc / .docx), PowerPoint (.ppt / .pptx), and images (JPEG, PNG, JPG).
+  </Step>
+
+  <Step title="Save or send for approval">
+    - Click **Save** to store the request as a draft. You can return and edit it at any time while it is in **Borrador** status.
+    - Click **Send for approval** (**Enviar a aprobación**) to start the approval workflow. You will be prompted to select the first approver. The request status changes to **Pendiente de aprobar** and the approver is notified by email.
+  </Step>
+</Steps>
+
+## Saving as draft vs. sending for approval
+
+When you click **Save**, the request is stored as **Borrador** (Draft). No approvers are notified, and the memo number is not yet assigned.
+
+When you click **Send for approval**:
+
+1. A sequential memo number is assigned (see [Memo number format](#memo-number-format)).
+2. A `submitted` entry is added to the review history.
+3. A pending assignment is created for the selected approver.
+4. An email notification is sent to that approver.
+
+You can send a draft at any time from within the form, as long as the request is still in **Borrador** status and you are the originator.
+
+<Tip>
+  Complete all narrative fields before sending for approval. Reviewers rely on the description, justification, and risk assessment to make their decision. Incomplete requests are more likely to be returned.
+</Tip>
+
+## Editing a returned memo request
+
+When an approver returns a memo request, the status changes to **Devuelta** (Returned) and you receive an email notification with the reviewer's comment.
+
+<Steps>
+  <Step title="Open the returned request">
+    From the **Solicitudes Memo** list, locate the request with status **Devuelta** and click its row or the edit action.
+  </Step>
+
+  <Step title="Read the reviewer's comment">
+    Scroll to the **Histórico de revisión** section at the bottom of the form to see the comment explaining the reason for the return.
+  </Step>
+
+  <Step title="Make corrections">
+    Edit any fields as needed. All form fields are editable while the request is in **Devuelta** status.
+  </Step>
+
+  <Step title="Resubmit">
+    Click **Send for approval**. The history records a `resubmitted` entry with your name as the correcting user. The original originator of the request is not changed.
+  </Step>
+</Steps>
+
+## Memo number format
+
+A memo number is assigned the first time the request is sent for approval. Drafts do not have a memo number.
+
+The format follows the same convention as SIC application numbers:
+
+```
+PREFIX-YEAR-XXXX
+```
+
+Where:
+- `PREFIX` — the uppercase company prefix (e.g., `HVD`).
+- `YEAR` — the four-digit year of first submission.
+- `XXXX` — a zero-padded sequential counter unique within the year.
+
+**Example:** `HVD-2025-0007`
+
+If the company has no prefix defined, the number is `YEAR-XXXX` (e.g., `2025-0007`). The memo number cannot be edited after assignment.
+
+## Viewing finalized memos
+
+Memo requests with status **Aprobada** (Approved) or **Rechazada** (Rejected) are read-only. Open them with the **Ver** (View) action from the list to see the full form and the complete review history in the **Histórico de revisión** section.
+
+The review history shows each step in chronological order: who submitted the request, which approvers acted on it, what decision they made, any comments they left, and the date and time of each action.
+
+<Note>
+  Memo requests do not have budget options (A/B/C/D) or a detailed investment breakdown. Those fields are specific to capital investment (SIC) requests. See [Attachments and budget options](/user-guide/attachments-and-options) for information about the SIC-specific budget option system.
+</Note>
+
+---
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Capital investment requests" icon="banknotes" href="/user-guide/capital-investment-requests">
+    Create and manage SIC requests with full investment breakdowns and budget options.
+  </Card>
+  <Card title="Approval workflow" icon="arrow-right-circle" href="/user-guide/approval-workflow">
+    Understand how requests move through multi-step approval and what each status means.
+  </Card>
+  <Card title="Attachments and budget options" icon="paperclip" href="/user-guide/attachments-and-options">
+    Learn how to upload files and select the correct budget option for SIC requests.
+  </Card>
+  <Card title="Notifications" icon="bell" href="/user-guide/notifications">
+    See when and how the system sends email notifications to originators and approvers.
+  </Card>
+</CardGroup>

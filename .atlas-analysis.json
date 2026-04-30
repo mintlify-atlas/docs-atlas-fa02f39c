@@ -1,0 +1,79 @@
+{
+  "projectType": "saas",
+  "projectName": "SIC-HVD",
+  "projectDescription": "An internal capital investment and memo request management system with multi-step approval workflows, role-based access control, and PDF export for HVD.",
+  "theme": "almond",
+  "primaryColor": "#fc2c24",
+  "lightColor": "#040404",
+  "darkColor": "#e29d78",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Getting Started",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["introduction", "getting-started/quickstart"]
+          },
+          {
+            "group": "Deployment",
+            "pages": ["getting-started/installation", "getting-started/docker-deployment", "getting-started/environment-configuration"]
+          }
+        ]
+      },
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Requests",
+            "pages": ["user-guide/capital-investment-requests", "user-guide/memo-requests", "user-guide/attachments-and-options"]
+          },
+          {
+            "group": "Approval Workflow",
+            "pages": ["user-guide/approval-workflow", "user-guide/roles-and-permissions", "user-guide/notifications"]
+          },
+          {
+            "group": "Administration",
+            "pages": ["user-guide/user-management", "user-guide/company-department-management", "user-guide/dashboard-and-reports"]
+          }
+        ]
+      },
+      {
+        "tab": "Technical Reference",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": ["reference/architecture-overview", "reference/data-models", "reference/request-statuses"]
+          },
+          {
+            "group": "Configuration",
+            "pages": ["reference/filament-panel", "reference/mail-and-notifications", "reference/pdf-export"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Capital investment request (SIC) creation and management with detailed cost breakdowns",
+    "Memo request creation and management",
+    "Multi-step approval workflow with configurable approver roles",
+    "Role-based access control using Filament Shield (super_admin, originator, approver)",
+    "Email and in-app notifications at each approval workflow step",
+    "PDF export for approved and rejected requests via signed URLs",
+    "Dashboard with monthly request charts and status overview widgets",
+    "Company, department, and cost center organizational hierarchy",
+    "Request options (A/B/C/D budget classification) for capital requests",
+    "Dockerized deployment with FrankenPHP/Octane for high performance"
+  ],
+  "publicApiSurface": [
+    "GET /local-currency-requests/{id}/pdf — Signed URL to download capital request PDF",
+    "GET /memo-request/{id}/pdf — Signed URL to download memo request PDF",
+    "Filament panel at /sic_hvd — Main admin panel (requires authentication)",
+    "RequestStatus enum: draft, pending, approved, returned, rejected, resubmitted",
+    "ReviewStatus enum: return, reject, approved, pending, submitted, resubmitted",
+    "ApprovalNotification::notifyApprovers(Model, Collection, ?User) — Notify approvers of pending requests",
+    "ApprovalNotification::notifyOriginator(Model, string, ?string, ?User) — Notify request originator of decisions",
+    "RequestOptions::definitions() — Returns A/B/C/D budget option definitions",
+    "User roles: super_admin, originator, approver"
+  ]
+}

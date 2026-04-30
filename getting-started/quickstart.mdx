@@ -1,0 +1,82 @@
+---
+title: "Get started with SIC-HVD"
+description: "Learn how to log in, create a capital investment request as a draft, fill in the required fields, and send it for approval in SIC-HVD."
+---
+
+This guide walks you through the core workflow in SIC-HVD: logging in, navigating to capital investment requests, creating a draft, and submitting it for approval. By the end you will have a request in the `pending` state and ready for an approver to review.
+
+<Note>
+  You need an account with the **originator** role to create and submit requests. If you need to review and approve requests instead, you need the **approver** role. Contact your system administrator to get the correct role assigned. See [Roles and permissions](/user-guide/roles-and-permissions) for details.
+</Note>
+
+## Submit your first capital investment request
+
+<Steps>
+  <Step title="Log in">
+    Open SIC-HVD in your browser. The application is served at the `/sic_hvd` path of your installation (for example, `https://yourdomain.com/sic_hvd`).
+
+    Enter your email address and password on the login page, then click **Sign in**. If you have forgotten your password, use the **Forgot your password?** link to receive a reset email.
+
+    After a successful login, you land on the **Dashboard**, which shows a summary of your requests and their current statuses.
+  </Step>
+  <Step title="Navigate to capital investment requests">
+    In the left sidebar, click **Capital Investment Requests** (SIC). This opens the requests index, which lists all requests you have created. If this is your first time, the list will be empty.
+
+    <Tip>
+      The sidebar only shows the sections your role has access to. If you do not see a section, your account may not have the required permissions.
+    </Tip>
+  </Step>
+  <Step title="Create a new draft request">
+    Click **New request** in the top-right corner of the index page. The request form opens in draft mode, meaning the request is saved locally without entering the approval workflow until you explicitly submit it.
+
+    A request starts with status `draft`. You can save and return to a draft as many times as you need before submitting.
+  </Step>
+  <Step title="Fill in the required fields">
+    Complete the request form with the following information:
+
+    - **Nombre del proyecto** — A short, descriptive name for the investment (`project_name`).
+    - **Company and department** — Select the organizational unit making the request. These are configured by your administrator. See [Company and department management](/user-guide/company-department-management).
+    - **Justification fields** — Describe the investment, explain why it is needed, document alternatives considered, and state the risk of not investing.
+    - **Amount and exchange rate** — Enter the total requested amount in lempiras and the current exchange rate.
+    - **Investment breakdown** — Select the investment type (purchase or construction) and fill in the corresponding cost fields. Select a budget option (A, B, C, or D) that describes the budget relationship for this request.
+    - **Attachments** — Upload any supporting documents such as quotes, technical specs, or approval letters. See [Attachments and options](/user-guide/attachments-and-options).
+
+    Click **Save** at any point to preserve your progress without submitting.
+  </Step>
+  <Step title="Send for approval">
+    Once the form is complete and all required fields are filled, click **Enviar a aprobación** (Send for approval). You will be prompted to select the first approver — a user with the **Director Ejecutivo** function. The request status changes from `draft` to `pending`, and the selected approver receives an email and an in-app notification.
+
+    You can monitor the status of your request on the [Dashboard](/user-guide/dashboard-and-reports) or in the requests list. The status column shows the current state at a glance.
+  </Step>
+</Steps>
+
+## What happens next
+
+After submission, the request enters the approval workflow. An approver will review your request and take one of the following actions:
+
+- **Approve** — The request is finalized. A signed PDF is generated and you receive a notification.
+- **Return** — The approver sends the request back to you with comments. You can revise it and resubmit, which moves it to the `resubmitted` state.
+- **Reject** — The request is declined. You receive a notification with the reason.
+
+For a complete explanation of each state and the transitions between them, see [Approval workflow](/user-guide/approval-workflow).
+
+<Tip>
+  Keep an eye on your in-app notifications (the bell icon in the top-right corner) and your email inbox. SIC-HVD sends notifications at each step of the workflow so you always know the current state of your requests.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Memo requests" icon="document-text" href="/user-guide/memo-requests">
+    Learn how to create and submit memo requests, which follow the same approval workflow.
+  </Card>
+  <Card title="Approval workflow" icon="check-circle" href="/user-guide/approval-workflow">
+    Understand the full lifecycle of a request from draft to final decision.
+  </Card>
+  <Card title="Dashboard and reports" icon="chart-bar" href="/user-guide/dashboard-and-reports">
+    Monitor the status of all your requests and track approval progress.
+  </Card>
+  <Card title="Installation" icon="server" href="/getting-started/installation">
+    Set up SIC-HVD from scratch if you are deploying the system yourself.
+  </Card>
+</CardGroup>

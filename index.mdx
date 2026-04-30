@@ -1,133 +1,61 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
-icon: 'star'
+title: "SIC-HVD: Capital Investment & Memo Request Management"
+description: "SIC-HVD is HVD's platform for capital investment and memo requests, featuring multi-step approval workflows, role-based access, and signed PDF export."
 ---
 
-## Setting up
+SIC-HVD is HVD's internal system for submitting, reviewing, and approving capital investment requests (SIC) and memo requests. It provides a structured approval workflow, role-based access control, real-time notifications, and PDF generation for finalized requests — all through a centralized Filament admin panel.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Set up your account and submit your first request in minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Capital Investment Requests" icon="banknotes" href="/user-guide/capital-investment-requests">
+    Create and manage SIC requests with detailed cost breakdowns and budget options.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Memo Requests" icon="document-text" href="/user-guide/memo-requests">
+    Submit memo requests for departmental justification and approval.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Approval Workflow" icon="check-circle" href="/user-guide/approval-workflow">
+    Understand the multi-step approval chain from originator to final supervisor.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What you can do with SIC-HVD
 
-Everything you need to create world-class documentation.
+SIC-HVD centralizes the entire lifecycle of capital investment and memo requests — from drafting and submission to multi-level review and final approval.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={2}>
+  <Card title="Roles & Permissions" icon="shield-check" href="/user-guide/roles-and-permissions">
+    Learn how originators, approvers, and super admins interact with the system.
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Notifications" icon="bell" href="/user-guide/notifications">
+    Stay updated with email and in-app notifications at every workflow step.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Dashboard & Reports" icon="chart-bar" href="/user-guide/dashboard-and-reports">
+    Monitor request status and track monthly approval trends on the dashboard.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
+  <Card title="User Management" icon="users" href="/user-guide/user-management">
+    Add users, assign roles, and manage access across departments.
   </Card>
-</Columns>
+</CardGroup>
 
-## Make your content agent ready
+## Get up and running
 
-Make your docs work for humans and AI agents alike.
+<Steps>
+  <Step title="Deploy SIC-HVD">
+    Follow the [installation guide](/getting-started/installation) or use the [Docker deployment](/getting-started/docker-deployment) to get the system running.
+  </Step>
+  <Step title="Configure your organization">
+    Set up your [companies, departments, and cost centers](/user-guide/company-department-management) to match your organizational structure.
+  </Step>
+  <Step title="Create users and assign roles">
+    [Add users](/user-guide/user-management) and assign them as originators or approvers based on their responsibilities.
+  </Step>
+  <Step title="Submit your first request">
+    Log in as an originator and follow the [quickstart guide](/getting-started/quickstart) to create and submit your first capital investment request.
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Prompt component"
-    icon="robot"
-    href="/agent-ready/prompt"
-  >
-    Embed shareable AI prompts readers can copy or open in Cursor.
-  </Card>
-  <Card
-    title="Visibility"
-    icon="eye"
-    href="/agent-ready/visibility"
-  >
-    Show different content to humans and agents reading your docs.
-  </Card>
-  <Card
-    title="Contextual menu"
-    icon="bolt"
-    href="/agent-ready/contextual"
-  >
-    Give readers one-click access to Claude, ChatGPT, Cursor, and more.
-  </Card>
-  <Card
-    title="AI coding tools"
-    icon="wand-magic-sparkles"
-    href="/ai-tools/claude-code"
-  >
-    Set up Claude Code, Cursor, or Windsurf with Mintlify's skill.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Note>
+  SIC-HVD is an internal tool for HVD staff. Access requires a valid account with an assigned role. Contact your system administrator if you need access.
+</Note>

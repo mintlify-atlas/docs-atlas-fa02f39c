@@ -1,0 +1,105 @@
+---
+title: "Manage users and assign roles in SIC-HVD"
+description: "Learn how to create user accounts, set the function field for approval chain positioning, and assign the correct Filament Shield role in SIC-HVD."
+---
+
+User management in SIC-HVD is restricted to users with the `super_admin` role. As a super admin, you can create new accounts, assign roles that control what each person can do in the panel, set the `function` value that determines where a user sits in the approval chain, and deactivate accounts without permanently deleting them. All user data is managed under the **Usuarios** section in the sidebar.
+
+## Creating a user
+
+<Steps>
+  <Step title="Open the Users section">
+    In the left sidebar, click **Usuarios**. You will see a list of all active users.
+  </Step>
+  <Step title="Click New user">
+    Click **Nuevo Usuario** in the top-right corner of the list page.
+  </Step>
+  <Step title="Fill in the user fields">
+    Complete all required fields in the form:
+
+    | Field | Label in UI | Description |
+    |---|---|---|
+    | `name` | Nombre | The user's first name. |
+    | `last_name` | Apellido | The user's last name. Combined with `name` to form the full display name. |
+    | `email` | Correo electrónico | A unique email address used to log in and receive notifications. |
+    | `password` | Contraseña | Set an initial password. The field is required when creating a new user and optional when editing. |
+    | `function` | Función | A text string that positions the user in the approval chain. See [The function field](#the-function-field) below. |
+    | `roles` | Rol | The Shield role assigned to the user. See [Assigning roles](#assigning-roles) below. |
+  </Step>
+  <Step title="Save the record">
+    Click **Crear Usuario**. The user can now log in with the email address and password you provided.
+  </Step>
+</Steps>
+
+## The `function` field
+
+The `function` field is a free-text string that controls where a user appears in the approval chain when a request is forwarded for review. SIC-HVD uses substring matching — it checks whether the field value *contains* one of the recognized function keywords — so the value must include the exact phrase listed below.
+
+| Function value | Role in the approval chain |
+|---|---|
+| `director ejecutivo` | First approver. Receives requests from originators and forwards to either `supervisor` or `gerente it sfh`. |
+| `supervisor` | Second-stage approver. Reviews requests forwarded by the director ejecutivo and can close the flow or forward to `analista financiero`. |
+| `gerente it sfh` | Alternative second-stage approver alongside `supervisor`. Handles technical IT/finance review. |
+| `analista financiero` | Third-stage approver. Receives requests forwarded by `supervisor` or `gerente it sfh`. |
+
+<Warning>
+  The matching is case-insensitive but must be an exact substring match. For example, a `function` value of `"Director Ejecutivo Regional"` will match the `director ejecutivo` step correctly. A typo such as `"director ejcutivo"` will break the chain and the user will not appear in the next-approver selector.
+</Warning>
+
+<Note>
+  A user with the `super_admin` role can hold any `function` value (including the seeded default `"Admin"`) without affecting request routing, because super admins are not part of the originator or approver flow.
+</Note>
+
+## Assigning roles
+
+SIC-HVD uses three roles managed by Filament Shield. You assign a role using the **Rol** selector in the user form.
+
+| Role | What the user can do |
+|---|---|
+| `super_admin` | Full access to the panel. Can manage all users, companies, departments, cost centers, request types, and all requests from every user. |
+| `originator` | Can create and submit capital investment requests and memo requests, edit their own drafts, and resubmit returned requests. |
+| `approver` | Can review requests assigned to them, and approve, return, or reject them. Cannot create or edit requests. |
+
+For a complete permission breakdown, see [Roles and permissions](/user-guide/roles-and-permissions).
+
+<Tip>
+  A user can only hold one role at a time. If you need to change a user's role, edit the record and select a different value in the **Rol** field.
+</Tip>
+
+## Soft deletes — deactivating a user
+
+The `User` model uses Laravel's `SoftDeletes` trait. When you delete a user record from the Filament panel, the record is soft-deleted: the `deleted_at` timestamp is set, and the user can no longer log in or appear in approver selectors. The underlying data — requests, review history, and attachments — is preserved.
+
+To restore a soft-deleted user, you must do so directly in the database or via a custom Artisan command, as there is no restore action exposed in the panel by default.
+
+## Initial admin account
+
+The database seeder creates one default super admin account for first-time setup:
+
+```text
+Email:    admin@admin.com
+Password: admin
+Role:     super_admin
+Function: Admin
+```
+
+<Warning>
+  The default password `admin` is insecure. Change it immediately after your first login in any environment — especially production. Go to **Usuarios**, find the Admin record, click **Edit**, enter a strong password in the **Contraseña** field, and click **Guardar**.
+</Warning>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Roles and permissions" icon="shield-check" href="/user-guide/roles-and-permissions">
+    See the full permission matrix for each role.
+  </Card>
+  <Card title="Approval workflow" icon="arrow-path" href="/user-guide/approval-workflow">
+    Understand how the function field drives the multi-step approval chain.
+  </Card>
+  <Card title="Company and department setup" icon="building-office" href="/user-guide/company-department-management">
+    Set up the organizational structure that requests are linked to.
+  </Card>
+  <Card title="Notifications" icon="bell" href="/user-guide/notifications">
+    Learn which email notifications are sent to approvers and originators.
+  </Card>
+</CardGroup>

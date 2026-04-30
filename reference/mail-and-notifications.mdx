@@ -1,0 +1,180 @@
+---
+title: "Mail and notification system reference"
+description: "How SIC-HVD sends approval notifications — email and database channels, the notification class parameters, helper methods, and mail driver setup."
+---
+
+SIC-HVD sends notifications to users at every step of the approval workflow. Each notification is delivered through two channels simultaneously: an email sent via the configured mail driver, and an in-app notification stored in the `notifications` database table and displayed as a bell alert in the Filament panel. All notifications are queued, so delivery happens asynchronously without blocking the HTTP request.
+
+## Notification channels
+
+The `ApprovalWorkflowNotification` class declares both channels in its `via()` method:
+
+```php
+public function via(object $notifiable): array
+{
+    return ['mail', 'database'];
+}
+```
+
+| Channel | Delivery | Storage |
+|---|---|---|
+| `mail` | SMTP, log, or Resend API (configured via `MAIL_MAILER`) | Not stored — one-way delivery |
+| `database` | Stored in the `notifications` table | Persisted; readable as a bell notification in the panel |
+
+## ApprovalWorkflowNotification class
+
+Defined in `app/Notifications/ApprovalWorkflowNotification.php`. This is the single notification class used for every workflow event (submission, approval, return, rejection).
+
+```php
+public function __construct(
+    protected string  $title,
+    protected string  $message,
+    protected string  $request_type,
+    protected string  $project_name,
+    protected ?string $project_type,
+    protected string  $action_label,
+    protected string  $action_url,
+    protected ?string $user_name = null,
+    protected ?string $status = null,
+    protected ?string $pending_approval_by = null
+) {}
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `title` | string | Email subject line and in-app notification title. Format: `"Solicitud - {type} - {request_number}"` |
+| `message` | string | Opening sentence in the email body (e.g., `"Se le asignó una solicitud para revisión y aprobación:"`) |
+| `request_type` | string | Request type label — `"Inversión de Capital"` or `"Memo"` |
+| `project_name` | string | The `project_name` field from the request record |
+| `project_type` | string\|null | The name of the associated `RequestType` record |
+| `action_label` | string | Button label in the email — `"Revisar solicitud"` for approvers, `"Ver solicitud"` for the originator |
+| `action_url` | string | URL the button links to (Filament edit/view page for the request) |
+| `user_name` | string\|null | Display string for the sender in the format `"Function - Full Name"` |
+| `status` | string\|null | Spanish status label (e.g., `"Aprobada"`, `"Devuelta"`) shown to the originator |
+| `pending_approval_by` | string\|null | Display string for the next pending approver; omitted when the recipient is the pending approver themselves |
+
+### Email template
+
+The email is rendered using the `emails.approval_email` Blade view (`resources/views/emails/approval_email.blade.php`). The `toMail()` method passes all constructor parameters as view variables:
+
+```php
+return (new MailMessage)
+    ->subject($this->title)
+    ->view('emails.approval_email', [
+        'title'              => $this->title,
+        'name_recipient'     => $notifiable->name ?? 'usuario',
+        'text_body'          => $this->message,
+        'request_type'       => $this->request_type,
+        'project_type'       => $this->project_type,
+        'project_name'       => $this->project_name,
+        'action_label'       => $this->action_label,
+        'action_url'         => $this->action_url,
+        'user_name'          => $this->user_name,
+        'status'             => $this->status,
+        'pending_approval_by' => $this->pending_approval_by,
+    ]);
+```
+
+`name_recipient` is always set to the notifiable user's first name so the email can open with a personal greeting.
+
+## ApprovalNotification helper
+
+Defined in `app/Support/ApprovalNotification.php`. This static helper class is the single place in the application that constructs and dispatches `ApprovalWorkflowNotification` instances. It also sends the parallel in-app bell notification via Filament's `Notification::make()`.
+
+### `notifyApprovers()`
+
+```php
+ApprovalNotification::notifyApprovers(
+    Model $record,
+    Collection $approvers,
+    ?User $sender = null
+): void
+```
+
+Sends an email and an in-app notification to every user in the `$approvers` collection. Called when:
+
+- An originator submits a request for the first time
+- An originator resubmits a returned request
+- An approver approves an intermediate step and assigns the next approver
+
+The `$sender` parameter defaults to `$record->user` (the originator) if not provided. Each approver receives a notification with `action_label = "Revisar solicitud"` and a link to the request edit/view page. The `pending_approval_by` line is suppressed in each approver's own notification (so an approver does not see themselves listed as the pending reviewer).
+
+### `notifyOriginator()`
+
+```php
+ApprovalNotification::notifyOriginator(
+    Model $record,
+    string $decision_label,
+    ?string $comment = null,
+    ?User $approver = null
+): void
+```
+
+Sends an email and an in-app notification to the request originator (`$record->user`). Called when:
+
+- An approver approves, returns, or rejects a request
+
+The `$decision_label` parameter is a `ReviewStatus` value or label. The helper maps it to the corresponding `RequestStatus` label (for example, `ReviewStatus::Approved` → `"Aprobada"`) and passes it as the `status` parameter so the originator's email clearly shows the outcome.
+
+## When notifications are sent
+
+| Event | Recipient | Method called |
+|---|---|---|
+| Originator submits for first time | Assigned approver(s) | `notifyApprovers()` |
+| Approver approves an intermediate step | Next assigned approver(s) | `notifyApprovers()` |
+| Originator resubmits a returned request | Next assigned approver(s) | `notifyApprovers()` |
+| Approver approves final step | Originator | `notifyOriginator()` |
+| Approver returns a request | Originator | `notifyOriginator()` |
+| Approver rejects a request | Originator | `notifyOriginator()` |
+
+## Mail configuration
+
+Mail settings are controlled by environment variables. The default in `.env.example` uses the `log` driver, which writes emails to the Laravel log file instead of sending them — useful for local development.
+
+| Variable | Default | Description |
+|---|---|---|
+| `MAIL_MAILER` | `log` | Mail driver: `log`, `smtp`, or `resend` |
+| `MAIL_HOST` | `127.0.0.1` | SMTP host (only used when `MAIL_MAILER=smtp`) |
+| `MAIL_PORT` | `2525` | SMTP port |
+| `MAIL_USERNAME` | `null` | SMTP username |
+| `MAIL_PASSWORD` | `null` | SMTP password |
+| `MAIL_FROM_ADDRESS` | `hello@example.com` | Sender address shown in all outgoing emails |
+| `MAIL_FROM_NAME` | `${APP_NAME}` | Sender name |
+
+### Resend integration
+
+The `resend/resend-laravel` package is included as a production dependency. To send email via the [Resend](https://resend.com) API, set the following in `.env`:
+
+```bash
+MAIL_MAILER=resend
+RESEND_API_KEY=re_your_api_key_here
+```
+
+No other SMTP settings are needed when using Resend. All outgoing emails are sent through the Resend API using the address configured in `MAIL_FROM_ADDRESS`.
+
+<Warning>
+  `MAIL_FROM_ADDRESS` must be a verified sender address in your Resend account. Emails sent from an unverified address will be rejected by the API.
+</Warning>
+
+## Queue and async delivery
+
+`ApprovalWorkflowNotification` uses the `Queueable` trait and implements `ShouldQueue`, so every notification is pushed onto the queue instead of being sent synchronously. The default queue connection is `database` (`QUEUE_CONNECTION=database` in `.env.example`).
+
+To process queued notifications, run:
+
+```bash
+php artisan queue:work
+```
+
+In local development, `composer run dev` starts the queue listener automatically. In production, run the queue worker as a supervised background process.
+
+<Note>
+  If the queue worker is not running, notifications are queued in the `jobs` table but never dispatched. Users will not receive emails or see new bell notifications until the worker processes the queue.
+</Note>
+
+## Related pages
+
+- [Approval workflow](/user-guide/approval-workflow)
+- [Notifications](/user-guide/notifications)
+- [Architecture overview](/reference/architecture-overview)
+- [Environment configuration](/getting-started/environment-configuration)

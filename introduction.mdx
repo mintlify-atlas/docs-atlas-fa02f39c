@@ -1,0 +1,74 @@
+---
+title: "SIC-HVD: Manage Capital Requests at HVD"
+description: "SIC-HVD is HVD's internal system for capital investment and memo requests, with structured approval workflows, role-based access, and PDF export."
+---
+
+SIC-HVD is an internal web application built for HVD staff to manage capital investment requests (SIC) and memo requests from creation through final approval. Originators draft and submit requests, approvers review and act on them, and super admins oversee the entire system — all within a single Filament-powered admin panel that handles notifications, PDF generation, and audit history automatically.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Capital investment requests" icon="banknotes" href="/user-guide/capital-investment-requests">
+    Create detailed SIC requests with cost breakdowns, budget options, and supporting attachments.
+  </Card>
+  <Card title="Memo requests" icon="document-text" href="/user-guide/memo-requests">
+    Submit memo requests for departmental justification and route them through the approval chain.
+  </Card>
+  <Card title="Multi-step approval workflow" icon="check-circle" href="/user-guide/approval-workflow">
+    Requests move through draft, pending, returned, resubmitted, and approved or rejected states with a full review history.
+  </Card>
+  <Card title="Notifications" icon="bell" href="/user-guide/notifications">
+    Automated email and in-app notifications keep all parties informed at every stage.
+  </Card>
+  <Card title="Dashboard and reports" icon="chart-bar" href="/user-guide/dashboard-and-reports">
+    Track request statuses and monitor approval trends across your organization.
+  </Card>
+  <Card title="PDF export" icon="document-arrow-down" href="/reference/pdf-export">
+    Generate signed, tamper-evident PDFs for approved requests using secure signed URLs.
+  </Card>
+</CardGroup>
+
+## System overview
+
+SIC-HVD uses three roles managed by [Filament Shield](/reference/filament-panel) (powered by Spatie Laravel Permission). Each role has a distinct set of permissions that determines what a user can see and do in the panel.
+
+| Role | Responsibilities |
+|---|---|
+| **originator** | Creates and submits capital investment and memo requests. Can edit drafts and resubmit returned requests. |
+| **approver** | Reviews pending and resubmitted requests. Can approve, return, or reject requests and leave review comments. |
+| **super_admin** | Full system access. Manages users, roles, companies, departments, and all request data. |
+
+For a complete breakdown of what each role can access, see [Roles and permissions](/user-guide/roles-and-permissions).
+
+## Request types
+
+SIC-HVD handles two distinct request types, each with its own form, attachment rules, and approval path.
+
+**Capital investment requests (SIC)** are used to request approval for spending on capital assets or significant operational investments. They require cost justification, departmental attribution, and supporting documentation. Once approved, the system generates a signed PDF record.
+
+**Memo requests** are used for internal approvals that require documented justification but do not necessarily involve capital expenditure. They follow the same approval workflow as SIC requests and also produce a signed PDF on approval.
+
+Both request types share the same status lifecycle: `draft` → `pending` → `approved` (or `returned` / `rejected`). A returned request can be revised and resubmitted, which moves it to the `resubmitted` state before re-entering the approval queue. See [Request statuses](/reference/request-statuses) for the full state machine.
+
+## Navigation
+
+After logging in, you land on the **Dashboard**, which shows an overview of your pending and recent requests. The sidebar on the left gives you access to all sections based on your role.
+
+<CardGroup cols={2}>
+  <Card title="Get started" icon="rocket" href="/getting-started/quickstart">
+    Follow the quickstart guide to log in, create a draft request, and send it for approval.
+  </Card>
+  <Card title="Installation" icon="server" href="/getting-started/installation">
+    Set up SIC-HVD in your own environment with the installation guide.
+  </Card>
+  <Card title="User management" icon="users" href="/user-guide/user-management">
+    Add users and assign roles as an administrator.
+  </Card>
+  <Card title="Architecture overview" icon="squares-2x2" href="/reference/architecture-overview">
+    Understand the underlying Laravel and Filament structure of the application.
+  </Card>
+</CardGroup>
+
+<Note>
+  SIC-HVD is an internal tool for HVD staff. You need a valid account with an assigned role to log in. Contact your system administrator if you do not have access.
+</Note>

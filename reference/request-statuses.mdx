@@ -1,0 +1,90 @@
+---
+title: "Request status reference for SIC-HVD"
+description: "Every RequestStatus and ReviewStatus enum value in SIC-HVD — Spanish labels, English descriptions, and the complete status transition diagram."
+---
+
+SIC-HVD uses two separate enums to track the state of the approval workflow. `RequestStatus` describes the overall state of a request as a whole. `ReviewStatus` describes the action taken by a specific participant in a single step of the review history. Both enums are stored as plain strings in the database.
+
+## Status flow diagram
+
+```text
+draft
+  └─▶ pending ──────────────────▶ approved
+          │
+          ├─▶ rejected  (workflow closed permanently)
+          │
+          └─▶ returned
+                 └─▶ resubmitted ──▶ pending ──▶ ...
+```
+
+A request starts as `draft` when the originator creates it. On first submission the status becomes `pending`. From `pending`, an approver can finalize (`approved`), close (`rejected`), or send back (`returned`) the request. A returned request can be corrected and resubmitted (`resubmitted`), which re-enters the `pending` state and continues the chain.
+
+## RequestStatus enum
+
+Defined in `app/Enums/RequestStatus.php`. This status is stored in the `status` column on the `local_currency_request` and `memo_request` tables.
+
+| Value | Spanish label | Description |
+|---|---|---|
+| `draft` | Borrador | Initial state. The request has been created but not yet submitted. The originator can freely edit it. No request number has been assigned yet. |
+| `pending` | Pendiente de aprobar | The request has been submitted and is waiting for an assigned approver to act. At least one `LocalCurrencyReviewHistory` or `MemoReviewHistory` row has `review_status = pending`. |
+| `approved` | Aprobada | Terminal state. All approvers in the chain have approved the request. No further action is possible. A PDF can be generated. |
+| `returned` | Devuelta | An approver sent the request back to the previous holder with a required comment. The previous holder must edit and resubmit. |
+| `rejected` | Rechazada | Terminal state. An approver rejected the request and closed the workflow. No further approvals are possible. A PDF can be generated. |
+| `resubmitted` | Reenviada para aprobación | A returned request was corrected and re-submitted into the approval chain. The workflow continues from the point of the return. |
+
+<Note>
+  PDF export is available for requests in `approved` and `rejected` status only. See [PDF export for finalized requests](/reference/pdf-export).
+</Note>
+
+## ReviewStatus enum
+
+Defined in `app/Enums/ReviewStatus.php`. This value is stored in the `decision` and `review_status` columns of the `local_currency_review_history` and `memo_review_history` tables. Each row in the review history carries a `ReviewStatus` that records what happened at that specific step.
+
+| Value | Spanish label | Description |
+|---|---|---|
+| `submitted` | Enviado a aprobación | The originator submitted the request for the first time. This is the first history row. |
+| `pending` | Pendiente de aprobación | This review step has been assigned to a reviewer and is awaiting their decision. |
+| `approved` | Aprobar | The reviewer approved this step. The request either advances to the next approver or, at the final step, becomes fully `approved`. |
+| `return` | Devolver | The reviewer returned the request to the previous holder. A comment is required. The request status becomes `returned`. |
+| `reject` | Rechazar | The reviewer rejected the request. A comment is required. The workflow closes permanently and the request status becomes `rejected`. |
+| `resubmitted` | Reenviada a aprobación | A previously returned request was corrected and re-submitted. Recorded as a new history row before the next `pending` assignment. |
+
+## How the two enums relate
+
+When a reviewer takes action, both enums are updated in a coordinated way:
+
+| Reviewer action (`ReviewStatus`) | Resulting request status (`RequestStatus`) |
+|---|---|
+| `submitted` | `pending` |
+| `approved` (intermediate step) | `pending` (next approver assigned) |
+| `approved` (final step) | `approved` |
+| `return` | `returned` |
+| `reject` | `rejected` |
+| `resubmitted` | `pending` |
+
+<Tip>
+  The `ApprovalNotification` helper in `app/Support/ApprovalNotification.php` maps `ReviewStatus` values to `RequestStatus` labels when constructing the notification message sent to the originator.
+</Tip>
+
+## Using the enums in code
+
+Both enums expose a `label()` method that returns the Spanish display string, and `RequestStatus` additionally exposes a static `labels()` helper for use in Filament Select fields:
+
+```php
+use App\Enums\RequestStatus;
+use App\Enums\ReviewStatus;
+
+// Get the Spanish label for a status
+RequestStatus::Approved->label(); // "Aprobada"
+ReviewStatus::Return->label();    // "Devolver"
+
+// Get all request statuses as an associative array for a Select field
+RequestStatus::labels();
+// ['draft' => 'Borrador', 'pending' => 'Pendiente de aprobar', ...]
+```
+
+## Related pages
+
+- [Approval workflow](/user-guide/approval-workflow)
+- [Data models and database schema](/reference/data-models)
+- [Mail and notification system](/reference/mail-and-notifications)
